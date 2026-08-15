@@ -31,7 +31,13 @@ function courseSlot(state, courseId) {
   return slot;
 }
 
+/* подписчики на изменения — на них живёт отправка в БД (sync.js) */
+const listeners = new Set();
+const emit = change => listeners.forEach(fn => { try { fn(change); } catch { /* не роняем запись из-за слушателя */ } });
+
 export const store = {
+  onChange(fn) { listeners.add(fn); return () => listeners.delete(fn); },
+
   /* --- прогресс по урокам --- */
   lessons(courseId) {
     return courseSlot(read(), courseId).lessons;
@@ -41,8 +47,11 @@ export const store = {
   },
   markLessonDone(courseId, lessonId) {
     const state = read();
-    courseSlot(state, courseId).lessons[lessonId] = { done: true, at: Date.now() };
+    const slot = courseSlot(state, courseId);
+    if (slot.lessons[lessonId]) return;              // уже отмечен — не шлём повторно
+    slot.lessons[lessonId] = { done: true, at: Date.now() };
     write(state);
+    emit({ kind: 'lesson', courseId, lessonId });
   },
   lessonsDoneCount(courseId) {
     return Object.keys(courseSlot(read(), courseId).lessons).length;
@@ -55,15 +64,42 @@ export const store = {
   bestScore(courseId, testId) {
     return courseSlot(read(), courseId).tests[testId] || null;
   },
-  /* пишем только если результат лучше прежнего; возвращаем true, если рекорд */
+  /* локально держим лучший результат, в БД уезжает каждая попытка;
+     возвращаем true, если это рекорд */
   saveScore(courseId, testId, correct, total) {
     const state = read();
     const tests = courseSlot(state, courseId).tests;
     const prev = tests[testId];
-    if (prev && prev.correct >= correct) return false;
-    tests[testId] = { correct, total, at: Date.now() };
-    write(state);
-    return true;
+    const isBest = !prev || correct > prev.correct;
+    if (isBest) {
+      tests[testId] = { correct, total, at: Date.now() };
+      write(state);
+    }
+    emit({ kind: 'score', courseId, testId, correct, total });
+    return isBest;
+  },
+
+  /* влить состояние с сервера: уроки объединяем, по тестам берём лучшее */
+  mergeRemote(courseId, { lessons = [], tests = [] }) {
+    const state = read();
+    const slot = courseSlot(state, courseId);
+    let changed = false;
+
+    lessons.forEach(({ lesson, at }) => {
+      if (slot.lessons[lesson]) return;
+      slot.lessons[lesson] = { done: true, at: at || Date.now() };
+      changed = true;
+    });
+
+    tests.forEach(({ test, correct, total, at }) => {
+      const prev = slot.tests[test];
+      if (prev && prev.correct >= correct) return;
+      slot.tests[test] = { correct, total, at: at || Date.now() };
+      changed = true;
+    });
+
+    if (changed) write(state);
+    return changed;
   },
 
   /* --- настройки (тема и т.п.) --- */

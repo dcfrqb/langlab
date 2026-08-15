@@ -6,6 +6,7 @@ import { makeCourse } from '../engine/course.js';
 import { startRouter } from '../engine/router.js';
 import { initTheme } from '../engine/theme.js';
 import { initKeys } from '../engine/keys.js';
+import { sync } from '../engine/sync.js';
 import { course as rawCourse } from '../content/en-ru/index.js';
 
 const course = makeCourse(rawCourse);
@@ -23,3 +24,6 @@ document.title = `${course.title} — ${course.brand.name}${course.brand.suffix}
 initTheme();
 initKeys();
 startRouter(document.getElementById('app'), course);
+
+/* прогресс: пишем локально сразу, в базу — фоном (если вошёл) */
+sync.init(course.id, () => window.dispatchEvent(new CustomEvent('langlab:synced')));
