@@ -6,6 +6,7 @@ import { renderHome } from './screens/home.js';
 import { renderTestsHome } from './screens/tests.js';
 import { renderResults } from './screens/results.js';
 import { renderLogin } from './screens/login.js';
+import { renderInvite } from './screens/invite.js';
 import { renderSurvey } from './screens/survey.js';
 import { renderPlayer } from './player.js';
 import { renderTest } from './quiz.js';
@@ -13,6 +14,9 @@ import { renderTest } from './quiz.js';
 export function startRouter(app, course) {
   function route() {
     const h = location.hash || '#/';
+
+    const inviteMatch = h.match(/^#\/invite\/(.+)$/);
+    if (inviteMatch) return show(() => renderInvite(app, course, inviteMatch[1]));
 
     const lessonMatch = h.match(/^#\/lesson\/(.+)$/);
     if (lessonMatch) {

@@ -56,6 +56,15 @@ export const api = {
     return r.otpId;
   },
 
+  /* вход по персональной ссылке — основной способ, пока нет почты */
+  async authWithInvite(token) {
+    const r = await request('/langlab/invite', {
+      method: 'POST', body: { token }, auth: false,
+    });
+    write({ token: r.token, user: { id: r.record.id, email: r.record.email } });
+    return api.user;
+  },
+
   async submitCode(otpId, code) {
     const r = await request('/collections/users/auth-with-otp', {
       method: 'POST', body: { otpId, password: String(code).trim() }, auth: false,
