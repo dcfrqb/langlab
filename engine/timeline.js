@@ -115,7 +115,7 @@ export function timeline(tl, { color, colorOf = () => color, labels = {} } = {})
   else if (shape === 'arrow') {
     const a = X(tl.from ?? 22);
     const end = tl.to != null ? Xn(tl.to) : +NOWX;
-    inner += `<line class="draw" filter="url(#glw)" pathLength="1" x1="${a}" y1="120" x2="${end - 6}" y2="120"
+    inner += `<path class="draw" filter="url(#glw)" pathLength="1" fill="none" d="M${a} 120 L${end - 6} 120"
                 stroke="${c}" stroke-width="4" stroke-linecap="round"/>
               <path class="pop" filter="url(#glw)" d="M${end} 120 l-15 -7 v14 z" fill="${c}" style="animation-delay:.8s"/>
               <text class="checkmark" x="${end}" y="98" text-anchor="middle" fill="${c}" font-size="22">✓</text>`;
