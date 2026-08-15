@@ -3,6 +3,7 @@
    после появления аккаунтов — те же данные придут из БД.
    ============================================================ */
 import { navHTML, bindNav } from '../nav.js';
+import { api } from '../api.js';
 import { store } from '../storage.js';
 import { setKeys } from '../keys.js';
 
@@ -47,8 +48,10 @@ export function renderResults(app, course) {
         <div class="res-meta">
           <div class="res-verdict ${level.c}">${level.t}</div>
           <div class="res-cover">пройдено тестов: <b>${taken.length}/${course.tests.length}</b> · охват ${cover}%</div>
-          <div class="res-note">Показаны лучшие результаты по каждому тесту (пока — в этом браузере;
-            появятся аккаунты — переедут в базу). Покажи этот экран мне — разберу слабые места точечно.</div>
+          <div class="res-note">Показаны лучшие результаты по каждому тесту. ${api.isAuthed
+            ? 'Хранятся в аккаунте и подтянутся на любом устройстве.'
+            : 'Пока хранятся в этом браузере — войдёшь по своей ссылке, и они уедут в аккаунт.'}
+            Покажи этот экран мне — разберу слабые места точечно.</div>
         </div>
       </div>
       <div class="res-list">${course.tests.map(row).join('')}</div>
