@@ -51,7 +51,7 @@
 одним разом, без консольных сниппетов:
 
 ```
-baza 8/8 · present 8/8 · past 4/7 · future 5/6 · struct 8/9 · words 6/6 · mix 14/14 · mine 9/10
+baza 8/8 · present 8/8 · past 4/7 · future 5/6 · struct 8/9 · words 6/6 · mix 14/14 · mine 9/10 · boss 17/18
 ```
 
 Полный источник и разбор — `Мир/Английский/Прогресс.md`.
