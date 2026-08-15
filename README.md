@@ -57,9 +57,15 @@ langlab/
 
 ## Деплой
 
-Только через git: коммит → `git push` в [dcfrqb/langlab](https://github.com/dcfrqb/langlab)
-→ `git pull` на сервере (`root@95.182.97.209`, сайт на `langs.crs-projects.com`).
-Никаких выкладок мимо репозитория.
+Только через git — никаких выкладок мимо репозитория:
+
+```bash
+git push && ssh root@95.182.97.209 'git -C /var/www/langs.crs-projects.com pull -q'
+```
+
+Живёт на <https://langs.crs-projects.com> (вебрут = клон этого репо,
+nginx: `/etc/nginx/sites-available/langs.crs-projects.com`, сертификат Let's Encrypt,
+`.git` наружу закрыт). Сборки нет, поэтому pull — это и есть выкат.
 
 ## Ключевой принцип
 
