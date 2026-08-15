@@ -1,0 +1,79 @@
+/* ============================================================
+   TOKENS — единственный источник цвета, шрифта, ритма.
+   Светлая и тёмная темы описаны одной строкой на токен через
+   light-dark(): переключение = смена color-scheme на <html>.
+     data-theme отсутствует → системная тема
+     data-theme="light" / "dark" → выбор пользователя
+   ============================================================ */
+
+:root {
+  color-scheme: light dark;
+
+  /* --- поверхности --- */
+  --bg:         light-dark(#fbfbfd, #0a0b10);
+  --bg-1:       light-dark(#ffffff, #0e1017);
+  --bg-2:       light-dark(#ffffff, #14161f);
+  --bg-3:       light-dark(#eef0f5, #1b1e29);
+  --grid:       light-dark(rgba(15, 20, 40, 0.035), rgba(255, 255, 255, 0.028));
+  --hairline:   light-dark(rgba(15, 20, 40, 0.10), rgba(255, 255, 255, 0.07));
+  --hairline-2: light-dark(rgba(15, 20, 40, 0.18), rgba(255, 255, 255, 0.12));
+  --veil:       light-dark(rgba(15, 20, 40, 0.06), rgba(255, 255, 255, 0.05));
+
+  /* --- текст --- */
+  --text:       light-dark(#0f1117, #f3f4f8);
+  --text-soft:  light-dark(#3b4155, #b9bdca);
+  --text-dim:   light-dark(#666d84, #7d8294);
+  --text-faint: light-dark(#949bad, #565b6b);
+
+  /* --- палитра курса (движок знает только эти имена) --- */
+  --c-blue:   light-dark(#2f62f5, #5f8bff);
+  --c-green:  light-dark(#0e9455, #35d488);
+  --c-orange: light-dark(#c1710b, #f5a63b);
+  --c-purple: light-dark(#7048dd, #ac8cf6);
+  --c-now:    light-dark(#b07d00, #ffd233);
+
+  --good:     light-dark(#0e9455, #35d488);
+  --bad:      light-dark(#d3352f, #ff6b6b);
+
+  /* текст поверх заливки акцентом */
+  --on-accent: light-dark(#ffffff, #06070c);
+
+  /* акцент по умолчанию — экраны переопределяют его на свой цвет */
+  --accent: var(--c-blue);
+
+  /* --- типографика --- */
+  --font-sans: -apple-system, "SF Pro Display", "SF Pro Text", "Inter",
+               system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "SF Mono", "JetBrains Mono", "Fira Code", ui-monospace,
+               Menlo, Monaco, "Cascadia Code", monospace;
+
+  /* --- радиусы --- */
+  --r-sm: 8px;  --r-md: 12px;  --r-lg: 18px;  --r-xl: 26px;  --r-pill: 999px;
+
+  /* --- ритм --- */
+  --s-1: 4px;   --s-2: 8px;   --s-3: 12px;  --s-4: 16px;
+  --s-5: 24px;  --s-6: 32px;  --s-7: 48px;  --s-8: 64px;  --s-9: 96px;
+
+  /* --- тени --- */
+  --shadow:     light-dark(0 18px 44px -24px rgba(15, 20, 40, 0.35),
+                           0 20px 60px -20px rgba(0, 0, 0, 0.7));
+  --shadow-sm:  light-dark(0 2px 10px -6px rgba(15, 20, 40, 0.35),
+                           0 2px 10px -6px rgba(0, 0, 0, 0.6));
+
+  /* --- габариты --- */
+  --maxw: 1120px;
+  --tap: 44px;            /* минимальная площадь тапа */
+}
+
+/* явный выбор пользователя перебивает системную тему */
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"]  { color-scheme: dark; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

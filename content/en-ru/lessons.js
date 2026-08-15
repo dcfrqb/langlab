@@ -4,9 +4,9 @@
    Разметка в примерах: <u>слово</u> — акцент цвета аспекта, <b> — жирный.
    ============================================================ */
 
-const GROUPS = ['База', 'Present', 'Past', 'Future', 'Структура', 'Слова'];
+export const GROUPS = ['База', 'Present', 'Past', 'Future', 'Структура', 'Слова'];
 
-const LESSONS = [
+export const LESSONS = [
 
 /* ============ БАЗА ============ */
 {
@@ -579,6 +579,3 @@ const LESSONS = [
 },
 ];
 
-/* helpers ---------------------------------------------------- */
-function lessonById(id){ return LESSONS.find(l => l.id === id); }
-function lessonsByGroup(g){ return LESSONS.filter(l => l.group === g); }

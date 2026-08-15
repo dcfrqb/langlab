@@ -10,7 +10,7 @@
          why — разбор, mine:true — построено на ТВОЕЙ реальной ошибке.
    ============================================================ */
 
-const QUESTIONS = [
+export const QUESTIONS = [
 
 /* ============ БАЗА ============ */
 { g:'База', type:'choose', q:'___ you tired?', options:['Am','Is','Are'], answer:2,
@@ -286,7 +286,7 @@ const QUESTIONS = [
 /* ------------------------------------------------------------
    ТЕСТЫ. pick — сколько вопросов взять; filter — из какого пула.
    ------------------------------------------------------------ */
-const TESTS = [
+export const TESTS = [
   { id:'baza',    title:'Рубеж 1 · База',        sub:'to be · порядок слов · мн.число · have got',
     aspect:'simple',     filter:q=>q.g==='База',       pick:8 },
   { id:'present', title:'Рубеж 2 · Present',      sub:'Simple · Continuous · Perfect',
@@ -317,5 +317,3 @@ const TESTS = [
     aspect:'perfcont',   filter:()=>true,                           pick:18, mixed:true, batch:2 },
 ];
 
-function testById(id){ return TESTS.find(t => t.id === id); }
-function poolFor(test){ return QUESTIONS.filter(test.filter); }

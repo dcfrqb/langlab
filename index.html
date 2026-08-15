@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="description" content="langlab — платформа для изучения языков: грамматика как система, анимированные таймлайны, тесты." />
+  <title>langlab</title>
+
+  <!-- тема ставится до первой отрисовки, иначе мигает светлым -->
+  <script>
+    try {
+      var t = JSON.parse(localStorage.getItem('langlab.v1') || '{}')?.prefs?.theme;
+      if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+    } catch (e) {}
+  </script>
+
+  <link rel="stylesheet" href="ui/tokens.css" />
+  <link rel="stylesheet" href="ui/base.css" />
+  <link rel="stylesheet" href="ui/components.css" />
+  <link rel="stylesheet" href="ui/player.css" />
+  <link rel="stylesheet" href="ui/tests.css" />
+</head>
+<body>
+  <div id="app"></div>
+  <script type="module" src="app/main.js"></script>
+</body>
+</html>
