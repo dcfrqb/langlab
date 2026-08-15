@@ -30,14 +30,24 @@ const arch = (cx, halfW, amp) => {
   return d;
 };
 
-const DEFS = `
+/* На странице живёт несколько таймлайнов сразу, а id в SVG глобальны на весь
+   документ: одинаковые id — и браузер берёт первый попавшийся, иногда из чужой
+   (даже скрытой) картинки. Поэтому у каждого таймлайна свой суффикс. */
+let seq = 0;
+
+/* filterUnits="userSpaceOnUse" — не косметика, а лечение конкретного бага.
+   По умолчанию область фильтра считается в процентах от bounding box элемента,
+   а у идеально горизонтальной линии (стрелка perfect) высота bbox = 0 → область
+   вырождается в ноль, и Safari по спецификации рисует пустоту (Chromium прощает).
+   Явная область в координатах холста снимает вопрос для всех фигур разом. */
+const defs = id => `
   <defs>
-    <radialGradient id="nowglow" cx="50%" cy="50%" r="50%">
+    <radialGradient id="nowglow-${id}" cx="50%" cy="50%" r="50%">
       <stop offset="0%"   stop-color="currentColor" stop-opacity="0.38"/>
       <stop offset="45%"  stop-color="currentColor" stop-opacity="0.11"/>
       <stop offset="100%" stop-color="currentColor" stop-opacity="0"/>
     </radialGradient>
-    <filter id="glw" x="-40%" y="-40%" width="180%" height="180%">
+    <filter id="glw-${id}" filterUnits="userSpaceOnUse" x="-40" y="-40" width="980" height="280">
       <feGaussianBlur stdDeviation="3.2" result="b"/>
       <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
@@ -64,10 +74,12 @@ export function timeline(tl, { color, colorOf = () => color, labels = {} } = {})
   const Xn = p => +X(p);
   const shape = tl.shape || (tl.markers && tl.markers.length > 1 ? 'diamonds' : 'point');
   const L = { past: 'PAST', future: 'FUTURE', now: 'NOW', ...labels };
+  const id = ++seq;
+  const glow = `filter="url(#glw-${id})"`;
 
   const nowBits = `
     <g style="color:var(--c-now)">
-      <ellipse class="glow" cx="${NOWX}" cy="118" rx="64" ry="96" fill="url(#nowglow)"/>
+      <ellipse class="glow" cx="${NOWX}" cy="118" rx="64" ry="96" fill="url(#nowglow-${id})"/>
     </g>
     <line class="nowdot" x1="${NOWX}" y1="46" x2="${NOWX}" y2="182"/>
     <text class="lbl-now" x="${NOWX}" y="34" text-anchor="middle">${L.now}</text>`;
@@ -86,28 +98,28 @@ export function timeline(tl, { color, colorOf = () => color, labels = {} } = {})
   if (shape === 'diamonds') {
     const xs = tl.markers ? tl.markers.map(m => Xn(m.pos)) : [centerX - 30, centerX, centerX + 30];
     xs.forEach((x, i) => {
-      inner += `<rect class="pop" filter="url(#glw)" x="${x - 8}" y="112" width="16" height="16" rx="3" fill="${c}"
+      inner += `<rect class="pop" ${glow} x="${x - 8}" y="112" width="16" height="16" rx="3" fill="${c}"
                 transform="rotate(45 ${x} 120)" style="animation-delay:${.15 + i * .1}s"/>`;
     });
   }
   else if (shape === 'point') {
     (tl.markers || []).forEach((m, i) => {
       const mc = m.color ? colorOf(m.color) : c;
-      inner += `<circle class="pop" filter="url(#glw)" cx="${Xn(m.pos)}" cy="120" r="9" fill="${mc}"
+      inner += `<circle class="pop" ${glow} cx="${Xn(m.pos)}" cy="120" r="9" fill="${mc}"
                 style="animation-delay:${.15 + i * .1}s"/>`;
     });
   }
   else if (shape === 'wave') {
-    inner += `<path class="draw" filter="url(#glw)" pathLength="1" fill="none" stroke="${c}" stroke-width="3.5"
+    inner += `<path class="draw" ${glow} pathLength="1" fill="none" stroke="${c}" stroke-width="3.5"
                 stroke-linecap="round" d="${sine(centerX, 84, 17, 2)}"/>
-              <circle class="pop" filter="url(#glw)" cx="${centerX}" cy="120" r="7" fill="var(--bg-1)"
+              <circle class="pop" ${glow} cx="${centerX}" cy="120" r="7" fill="var(--bg-1)"
                 stroke="${c}" stroke-width="2" style="animation-delay:.8s"/>`;
   }
   else if (shape === 'bump') {
     const hw = 58, a = centerX - hw, b = centerX + hw;
-    inner += `<path class="draw" filter="url(#glw)" pathLength="1" fill="none" stroke="${c}" stroke-width="3.5"
+    inner += `<path class="draw" ${glow} pathLength="1" fill="none" stroke="${c}" stroke-width="3.5"
                 stroke-linecap="round" d="${arch(centerX, hw, 26)}"/>
-              <circle class="pop" filter="url(#glw)" cx="${b}" cy="120" r="7" fill="${c}" style="animation-delay:.8s"/>
+              <circle class="pop" ${glow} cx="${b}" cy="120" r="7" fill="${c}" style="animation-delay:.8s"/>
               <path class="draw" pathLength="1" fill="none" stroke="${c}" stroke-width="2" opacity=".6"
                 d="M${a} 136 v6 h${b - a} v-6"/>`;
     if (tl.bracket) inner += `<text class="cap" x="${centerX}" y="162" text-anchor="middle" fill="${c}">${tl.bracket}</text>`;
@@ -115,17 +127,17 @@ export function timeline(tl, { color, colorOf = () => color, labels = {} } = {})
   else if (shape === 'arrow') {
     const a = X(tl.from ?? 22);
     const end = tl.to != null ? Xn(tl.to) : +NOWX;
-    inner += `<path class="draw" filter="url(#glw)" pathLength="1" fill="none" d="M${a} 120 L${end - 6} 120"
+    inner += `<path class="draw" ${glow} pathLength="1" fill="none" d="M${a} 120 L${end - 6} 120"
                 stroke="${c}" stroke-width="4" stroke-linecap="round"/>
-              <path class="pop" filter="url(#glw)" d="M${end} 120 l-15 -7 v14 z" fill="${c}" style="animation-delay:.8s"/>
+              <path class="pop" ${glow} d="M${end} 120 l-15 -7 v14 z" fill="${c}" style="animation-delay:.8s"/>
               <text class="checkmark" x="${end}" y="98" text-anchor="middle" fill="${c}" font-size="22">✓</text>`;
   }
   else if (shape === 'arc') {
     const a = X(tl.from ?? 24), b = X(tl.to ?? 68);
-    inner += `<path class="draw" filter="url(#glw)" pathLength="1" fill="none" stroke="${c}" stroke-width="3"
+    inner += `<path class="draw" ${glow} pathLength="1" fill="none" stroke="${c}" stroke-width="3"
                 stroke-dasharray="2 7" stroke-linecap="round" d="M${a} 120 Q ${(+a + +b) / 2} 62, ${b} 120"/>
-              <circle class="pop" filter="url(#glw)" cx="${a}" cy="120" r="9" fill="${c}" style="animation-delay:.2s"/>
-              <circle class="pop" filter="url(#glw)" cx="${b}" cy="120" r="8" fill="${c}" opacity=".7" style="animation-delay:.9s"/>`;
+              <circle class="pop" ${glow} cx="${a}" cy="120" r="9" fill="${c}" style="animation-delay:.2s"/>
+              <circle class="pop" ${glow} cx="${b}" cy="120" r="8" fill="${c}" opacity=".7" style="animation-delay:.9s"/>`;
   }
 
   let cap = '';
@@ -136,5 +148,5 @@ export function timeline(tl, { color, colorOf = () => color, labels = {} } = {})
   });
 
   return `<div class="tl-scroll"><svg class="tl" viewBox="0 0 900 200" xmlns="http://www.w3.org/2000/svg"
-    role="img" aria-label="таймлайн">${DEFS}${nowBits}${axis}${inner}${cap}</svg></div>`;
+    role="img" aria-label="таймлайн">${defs(id)}${nowBits}${axis}${inner}${cap}</svg></div>`;
 }
