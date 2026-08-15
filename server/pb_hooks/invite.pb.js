@@ -7,29 +7,35 @@
  *    Пустое поле = «выпиши новый», так токен отзывается прямо из админки.
  * 2. POST /api/langlab/invite {token} — меняет токен на обычную сессию PocketBase.
  *
+ * ВАЖНО: каждый колбэк PocketBase выполняет в отдельной изолированной VM —
+ * общие константы и функции из этого файла внутрь НЕ попадают (ReferenceError).
+ * Поэтому каждый обработчик самодостаточен, и 40 продублировано намеренно.
+ *
  * Компромисс осознанный: ссылка работает многократно (человек открывает её
  * и на телефоне, и на ноуте), то есть это долгоживущий секрет в адресе.
  * Для круга «я, Карина и пара знакомых» — приемлемо, отзыв в один клик.
  */
 
-const TOKEN_LEN = 40;
-
-function ensureToken(e) {
+onRecordCreate((e) => {
   if (!e.record.getString('invite_token')) {
-    e.record.set('invite_token', $security.randomString(TOKEN_LEN));
+    e.record.set('invite_token', $security.randomString(40));
   }
   e.next();
-}
+}, 'users');
 
-onRecordCreate(ensureToken, 'users');
-onRecordUpdate(ensureToken, 'users');
+onRecordUpdate((e) => {
+  if (!e.record.getString('invite_token')) {
+    e.record.set('invite_token', $security.randomString(40));
+  }
+  e.next();
+}, 'users');
 
 routerAdd('POST', '/api/langlab/invite', (e) => {
   const body = new DynamicModel({ token: '' });
   e.bindBody(body);
 
   const token = String(body.token || '').trim();
-  if (token.length !== TOKEN_LEN) {
+  if (token.length !== 40) {
     throw new BadRequestError('Ссылка недействительна.');
   }
 
@@ -41,6 +47,6 @@ routerAdd('POST', '/api/langlab/invite', (e) => {
   }
 
   // пустая строка вместо метода — чтобы PocketBase не пытался слать письмо-алерт
-  // о входе: почты у нас нет, а каждая попытка стоит двух минут таймаута
+  // о входе: почты у нас нет, а каждая попытка стоила двух минут таймаута
   return $apis.recordAuthResponse(e, user, '');
 });
