@@ -38,6 +38,29 @@ async function sendOne(item) {
       user, course: item.courseId, test: item.testId,
       correct: item.correct, total: item.total, source: 'app',
     });
+    return;
+  }
+
+  if (item.kind === 'profile') {
+    const p = item.profile;
+    const existing = await api.list('profiles', { filter: api.mine(), perPage: 1 });
+    const data = { user, level: p.level, goal: p.goal, survey: p.survey };
+    if (existing.length) await api.update('profiles', existing[0].id, data);
+    else await api.create('profiles', data);
+    return;
+  }
+
+  if (item.kind === 'program') {
+    // программу заводим только если её ещё нет: ручную правку из админки не трогаем
+    const existing = await api.list('programs', {
+      filter: api.mine(`course="${item.courseId}"`), perPage: 1,
+    });
+    if (existing.length) return;
+    const p = item.program;
+    await api.create('programs', {
+      user, course: item.courseId, title: p.title, items: p.items,
+      note: p.note, active: true, source: 'survey',
+    });
   }
 }
 
@@ -72,10 +95,22 @@ export const sync = {
   /* забрать своё из БД и влить в локальное состояние */
   async pull(courseId) {
     if (!api.isAuthed) return false;
-    const [progress, results] = await Promise.all([
+    const [progress, results, profiles, programs] = await Promise.all([
       api.list('progress', { filter: api.mine(`course="${courseId}"`) }),
       api.list('test_results', { filter: api.mine(`course="${courseId}"`), sort: '-created' }),
+      api.list('profiles', { filter: api.mine(), perPage: 1 }),
+      api.list('programs', { filter: api.mine(`course="${courseId}"`), sort: '-updated', perPage: 1 }),
     ]);
+
+    /* профиль и программа на сервере главнее: их мог поправить админ */
+    if (profiles[0]) {
+      const p = profiles[0];
+      store.setProfile(courseId, { level: p.level, goal: p.goal, survey: p.survey }, { silent: true });
+    }
+    if (programs[0]) {
+      const p = programs[0];
+      store.setProgram(courseId, { title: p.title, items: p.items || [], note: p.note }, { silent: true });
+    }
 
     const best = new Map();
     results.forEach(r => {
@@ -83,22 +118,29 @@ export const sync = {
       if (!prev || r.correct > prev.correct) best.set(r.test, r);
     });
 
-    return store.mergeRemote(courseId, {
+    const merged = store.mergeRemote(courseId, {
       lessons: progress.map(p => ({ lesson: p.lesson, at: Date.parse(p.created) || Date.now() })),
       tests: [...best.values()].map(r => ({
         test: r.test, correct: r.correct, total: r.total, at: Date.parse(r.created) || Date.now(),
       })),
     });
+    return merged || !!profiles[0] || !!programs[0];
   },
 
   /* отправить в БД всё, что человек успел нарешать до входа */
   async pushLocal(courseId) {
     const lessons = store.lessons(courseId);
     const scores = store.scores(courseId);
+    const profile = store.profile(courseId);
+    const program = store.program(courseId);
     const q = readQueue();
+
     Object.keys(lessons).forEach(lessonId => q.push({ kind: 'lesson', courseId, lessonId }));
     Object.entries(scores).forEach(([testId, s]) =>
       q.push({ kind: 'score', courseId, testId, correct: s.correct, total: s.total }));
+    if (profile) q.push({ kind: 'profile', courseId, profile });
+    if (program) q.push({ kind: 'program', courseId, program });
+
     writeQueue(q);
     await sync.flush();
   },

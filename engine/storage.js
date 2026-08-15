@@ -79,6 +79,27 @@ export const store = {
     return isBest;
   },
 
+  /* --- профиль и программа: локальный кэш, чтобы работало и оффлайн --- */
+  profile(courseId) {
+    return courseSlot(read(), courseId).profile || null;
+  },
+  setProfile(courseId, profile, { silent = false } = {}) {
+    const state = read();
+    courseSlot(state, courseId).profile = profile;
+    write(state);
+    if (!silent) emit({ kind: 'profile', courseId, profile });
+  },
+
+  program(courseId) {
+    return courseSlot(read(), courseId).program || null;
+  },
+  setProgram(courseId, program, { silent = false } = {}) {
+    const state = read();
+    courseSlot(state, courseId).program = program;
+    write(state);
+    if (!silent) emit({ kind: 'program', courseId, program });
+  },
+
   /* влить состояние с сервера: уроки объединяем, по тестам берём лучшее */
   mergeRemote(courseId, { lessons = [], tests = [] }) {
     const state = read();

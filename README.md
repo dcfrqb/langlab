@@ -67,6 +67,13 @@ langlab/
 git push && ssh root@95.182.97.209 'git -C /var/www/langs.crs-projects.com pull -q'
 ```
 
+Если менялось что-то в `server/` (схема, версия PocketBase) — после pull ещё и перезапуск,
+иначе новые миграции не применятся:
+
+```bash
+ssh root@95.182.97.209 'cd /var/www/langs.crs-projects.com/server && docker compose up -d'
+```
+
 Живёт на <https://langs.crs-projects.com> (вебрут = клон этого репо,
 nginx: `/etc/nginx/sites-available/langs.crs-projects.com`, сертификат Let's Encrypt,
 `.git` наружу закрыт). Сборки нет, поэтому pull — это и есть выкат.

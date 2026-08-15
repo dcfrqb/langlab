@@ -7,6 +7,48 @@ import { explorerHTML, bindExplorer } from '../explorer.js';
 import { store } from '../storage.js';
 import { setKeys } from '../keys.js';
 
+/* блок «твоя программа»: то, ради чего всё затевалось —
+   человек видит свой порядок, а не общий каталог */
+function programHTML(course, done) {
+  const program = store.program(course.id);
+  if (!program) {
+    return `
+      <section class="section wrap">
+        <a class="test-cta" href="#/survey" style="--accent:${course.categories[0].color};margin-top:0">
+          <div>
+            <div class="cta-k">программа под тебя</div>
+            <div class="cta-t">Пройди короткий опрос</div>
+          </div>
+          <span class="cta-go">три минуты ›</span>
+        </a>
+      </section>`;
+  }
+
+  const lessons = program.items.map(id => course.lessonById(id)).filter(Boolean);
+  const next = lessons.filter(l => !done[l.id]).slice(0, 5);
+  const passed = lessons.length - lessons.filter(l => !done[l.id]).length;
+
+  if (!next.length) {
+    return `<section class="section wrap"><div class="program-done">✓ Программа пройдена целиком —
+      <a href="#/tests">проверь себя тестами</a> или скажи мне, и я соберу следующую.</div></section>`;
+  }
+
+  return `
+    <section class="section wrap">
+      <p class="eyebrow">твоя программа · пройдено ${passed}/${lessons.length}</p>
+      <h2 style="margin-bottom:6px">${program.title}</h2>
+      <p class="lede" style="margin:0 0 20px">${program.note || ''}</p>
+      <div class="program-list">
+        ${next.map((l, i) => `
+          <a class="program-row ${i === 0 ? 'first' : ''}" href="#/lesson/${l.id}" style="--accent:${course.accentFor(l)}">
+            <span class="program-no">${String(passed + i + 1).padStart(2, '0')}</span>
+            <span class="program-body"><b>${l.title}</b><small>${l.subtitle}</small></span>
+            <span class="program-go">${i === 0 ? 'продолжить ›' : '›'}</span>
+          </a>`).join('')}
+      </div>
+    </section>`;
+}
+
 export function renderHome(app, course) {
   const doneCount = store.lessonsDoneCount(course.id);
   const done = store.lessons(course.id);
@@ -47,6 +89,8 @@ export function renderHome(app, course) {
         ${course.categories.map(c => `<span><i style="background:${c.color}"></i> ${c.short}</span>`).join('')}
       </div>
     </header>
+
+    ${programHTML(course, done)}
 
     ${explorerHTML(course)}
 

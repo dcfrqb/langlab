@@ -6,6 +6,7 @@ import { renderHome } from './screens/home.js';
 import { renderTestsHome } from './screens/tests.js';
 import { renderResults } from './screens/results.js';
 import { renderLogin } from './screens/login.js';
+import { renderSurvey } from './screens/survey.js';
 import { renderPlayer } from './player.js';
 import { renderTest } from './quiz.js';
 
@@ -28,6 +29,7 @@ export function startRouter(app, course) {
     if (h === '#/tests') return show(() => renderTestsHome(app, course));
     if (h === '#/results') return show(() => renderResults(app, course));
     if (h === '#/login') return show(() => renderLogin(app, course));
+    if (h === '#/survey') return show(() => renderSurvey(app, course));
 
     return show(() => renderHome(app, course));
   }
