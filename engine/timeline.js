@@ -68,7 +68,7 @@ export function centerTimelines(root) {
  * @param {function} opts.colorOf ключ категории → CSS-цвет (для точечных маркеров)
  * @param {object} opts.labels    { past, future, now }
  */
-export function timeline(tl, { color, colorOf = () => color, labels = {} } = {}) {
+export function timeline(tl, { color, ink = color, colorOf = () => color, inkOf = () => ink, labels = {} } = {}) {
   if (!tl) return '';
   const c = color;
   const Xn = p => +X(p);
@@ -122,7 +122,7 @@ export function timeline(tl, { color, colorOf = () => color, labels = {} } = {})
               <circle class="pop" ${glow} cx="${b}" cy="120" r="7" fill="${c}" style="animation-delay:.8s"/>
               <path class="draw" pathLength="1" fill="none" stroke="${c}" stroke-width="2" opacity=".6"
                 d="M${a} 136 v6 h${b - a} v-6"/>`;
-    if (tl.bracket) inner += `<text class="cap" x="${centerX}" y="162" text-anchor="middle" fill="${c}">${tl.bracket}</text>`;
+    if (tl.bracket) inner += `<text class="cap" x="${centerX}" y="162" text-anchor="middle" fill="${ink}">${tl.bracket}</text>`;
   }
   else if (shape === 'arrow') {
     const a = X(tl.from ?? 22);
@@ -130,7 +130,7 @@ export function timeline(tl, { color, colorOf = () => color, labels = {} } = {})
     inner += `<path class="draw" ${glow} pathLength="1" fill="none" d="M${a} 120 L${end - 6} 120"
                 stroke="${c}" stroke-width="4" stroke-linecap="round"/>
               <path class="pop" ${glow} d="M${end} 120 l-15 -7 v14 z" fill="${c}" style="animation-delay:.8s"/>
-              <text class="checkmark" x="${end - 26}" y="102" text-anchor="middle" fill="${c}" font-size="22">✓</text>`;
+              <text class="checkmark" x="${end - 26}" y="102" text-anchor="middle" fill="${ink}" font-size="22">✓</text>`;
   }
   else if (shape === 'arc') {
     const a = X(tl.from ?? 24), b = X(tl.to ?? 68);
@@ -143,7 +143,7 @@ export function timeline(tl, { color, colorOf = () => color, labels = {} } = {})
   let cap = '';
   const caps = tl.captions || (tl.caption ? [tl.caption] : []);
   caps.forEach(cp => {
-    const cc = cp.color ? colorOf(cp.color) : c;
+    const cc = cp.color ? inkOf(cp.color) : ink;
     cap += `<text class="cap" x="${X(cp.pos)}" y="150" text-anchor="middle" fill="${cc}">${cp.text}</text>`;
   });
 

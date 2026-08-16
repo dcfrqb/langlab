@@ -16,7 +16,7 @@
 .deck-head .pill { margin-bottom: var(--s-3); }
 .deck-head h1 { font-size: var(--fs-7); margin: 0 0 var(--s-2); animation: rise var(--dur-3) var(--ease) both; }
 .deck-head .lesson-sub {
-  font-size: var(--fs-5); font-weight: 600; color: var(--accent);
+  font-size: var(--fs-5); font-weight: 600; color: var(--accent-ink);
   animation: rise var(--dur-3) 50ms var(--ease) both;
 }
 /* со второго шага шапка сжимается: место нужно контенту, а не титрам */
@@ -74,7 +74,7 @@
    ============================================================ */
 .lead {
   font-size: var(--fs-6); font-weight: 700; letter-spacing: -0.02em;
-  margin: 0 0 var(--s-3); color: var(--accent);
+  margin: 0 0 var(--s-3); color: var(--accent-ink);
 }
 .body { font-size: var(--fs-4); color: var(--text-soft); max-width: var(--maxw-text); }
 
@@ -98,7 +98,7 @@
   text-align: center; font-size: var(--fs-3); color: var(--text-soft);
   padding: 0 var(--s-4) var(--s-2);
 }
-.explorer-caption b { color: var(--accent); }
+.explorer-caption b { color: var(--accent-ink); }
 
 .aspect-rows { display: grid; gap: var(--s-2); }
 .aspect-row {
@@ -146,7 +146,7 @@
   background: var(--success-soft); border: 1px solid color-mix(in oklab, var(--success) 30%, transparent);
   color: var(--text); font-size: var(--fs-3);
 }
-.program-done a { color: var(--success); border-bottom: 1px solid currentColor; }
+.program-done a { color: var(--success-ink); border-bottom: 1px solid currentColor; }
 
 /* ============================================================
    Тесты: карточка теста и разбор ответа
@@ -154,17 +154,17 @@
 .t-grid { display: grid; grid-template-columns: 1fr; gap: var(--s-3); }
 @media (min-width: 560px) { .t-grid { grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: var(--s-4); } }
 .t-card { padding-bottom: 50px; }
-.t-card .kicker { color: var(--accent); }
-.t-card .t-best { color: var(--success); }
+.t-card .kicker { color: var(--accent-ink); }
+.t-card .t-best { color: var(--success-ink); }
 .t-card .t-go {
   position: absolute; left: var(--s-5); bottom: var(--s-4);
-  font-family: var(--font-mono); font-size: var(--fs-2); color: var(--accent); font-weight: 600;
+  font-family: var(--font-mono); font-size: var(--fs-2); color: var(--accent-ink); font-weight: 600;
 }
 
 /* тип задания — говорим, что именно надо сделать */
 .q-type {
   font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: 0.18em;
-  text-transform: uppercase; color: var(--accent); text-align: center; margin-bottom: var(--s-3);
+  text-transform: uppercase; color: var(--accent-ink); text-align: center; margin-bottom: var(--s-3);
 }
 .q {
   font-family: var(--font-mono); font-size: var(--fs-6); color: var(--text);
@@ -176,9 +176,9 @@
   text-align: center; font-family: var(--font-mono); font-size: var(--fs-1);
   letter-spacing: 0.1em; color: var(--text-faint); margin: -6px 0 var(--s-3);
 }
-.opt.is-selected::after { content: '✓'; float: right; color: var(--accent); font-weight: 700; }
-.opt.is-correct::after  { content: '✓'; float: right; color: var(--success); }
-.opt.is-wrong::after    { content: '✕'; float: right; color: var(--danger); }
+.opt.is-selected::after { content: '✓'; float: right; color: var(--accent-ink); font-weight: 700; }
+.opt.is-correct::after  { content: '✓'; float: right; color: var(--success-ink); }
+.opt.is-wrong::after    { content: '✕'; float: right; color: var(--danger-ink); }
 
 .err-sent {
   text-align: center; font-family: var(--font-mono); font-size: var(--fs-6);
@@ -205,11 +205,11 @@
   font-family: var(--font-mono); font-size: inherit; text-align: center; width: 5.5em;
   padding: 4px var(--s-2); margin: 0 var(--s-1); border: 0;
   border-bottom: 2px solid var(--accent); background: var(--surface-sunken);
-  color: var(--accent); border-radius: 6px 6px 0 0;
+  color: var(--accent-ink); border-radius: 6px 6px 0 0;
 }
 .mgap-input:focus { outline: none; background: var(--surface-raised); }
-.mgap-input.is-correct { border-color: var(--success); color: var(--success); }
-.mgap-input.is-wrong   { border-color: var(--danger);  color: var(--danger); }
+.mgap-input.is-correct { border-color: var(--success); color: var(--success-ink); }
+.mgap-input.is-wrong   { border-color: var(--danger);  color: var(--danger-ink); }
 
 /* разбор ответа: вердикт, что ответил ты, что правильно, почему */
 .explain {
@@ -219,20 +219,20 @@
 }
 .explain.is-shown { opacity: 1; transform: none; }
 .explain .verdict { font-family: var(--font-mono); font-weight: 700; font-size: var(--fs-3); letter-spacing: 0.05em; }
-.explain .verdict.is-good { color: var(--success); }
-.explain .verdict.is-bad  { color: var(--danger); }
+.explain .verdict.is-good { color: var(--success-ink); }
+.explain .verdict.is-bad  { color: var(--danger-ink); }
 .explain .given { margin-top: 6px; color: var(--text-dim); }
-.explain .given b { font-family: var(--font-mono); color: var(--danger); font-weight: 600; }
+.explain .given b { font-family: var(--font-mono); color: var(--danger-ink); font-weight: 600; }
 .explain .right { margin-top: 2px; color: var(--text); }
-.explain .right b { font-family: var(--font-mono); color: var(--success); }
+.explain .right b { font-family: var(--font-mono); color: var(--success-ink); }
 .explain .why-line { margin-top: var(--s-2); color: var(--text-dim); font-size: var(--fs-2); }
 .explain .ru { display: block; margin-top: var(--s-1); }
 
 /* итог теста */
 .score-verdict { font-size: var(--fs-5); font-weight: 600; }
-.score-verdict.is-good { color: var(--success); }
-.score-verdict.is-ok   { color: var(--warn); }
-.score-verdict.is-bad  { color: var(--danger); }
+.score-verdict.is-good { color: var(--success-ink); }
+.score-verdict.is-ok   { color: var(--warn-ink); }
+.score-verdict.is-bad  { color: var(--danger-ink); }
 .review { max-width: 640px; margin: var(--s-2) auto 0; display: grid; gap: var(--s-3); }
 .rev-item {
   background: var(--surface-raised); border: 1px solid var(--border);
@@ -243,11 +243,11 @@
 .rev-ru { font-size: var(--fs-2); color: var(--text-dim); font-style: italic; margin-top: 2px; }
 .rev-a { margin-top: 6px; font-size: var(--fs-2); color: var(--text-dim); }
 .rev-a b { font-family: var(--font-mono); }
-.rev-a .was { color: var(--danger); }
-.rev-a .fix { color: var(--success); }
+.rev-a .was { color: var(--danger-ink); }
+.rev-a .fix { color: var(--success-ink); }
 .rev-w { margin-top: 6px; font-size: var(--fs-2); color: var(--text-dim); }
 .allclear {
-  text-align: center; color: var(--success); font-size: var(--fs-5);
+  text-align: center; color: var(--success-ink); font-size: var(--fs-5);
   font-family: var(--font-mono); padding: var(--s-6);
 }
 
@@ -261,16 +261,16 @@
 }
 .res-meta { flex: 1; min-width: 220px; }
 .res-verdict { font-size: var(--fs-5); font-weight: 700; }
-.res-verdict.is-good { color: var(--success); }
-.res-verdict.is-ok   { color: var(--warn); }
-.res-verdict.is-bad  { color: var(--danger); }
+.res-verdict.is-good { color: var(--success-ink); }
+.res-verdict.is-ok   { color: var(--warn-ink); }
+.res-verdict.is-bad  { color: var(--danger-ink); }
 .res-cover { color: var(--text-soft); font-size: var(--fs-3); margin-top: 6px; }
 .res-note { color: var(--text-dim); font-size: var(--fs-2); margin-top: var(--s-2); max-width: 52ch; }
 .res-name { flex: 1; font-size: var(--fs-3); font-weight: 600; min-width: 0; }
 .res-score { flex: 0 0 52px; text-align: right; font-family: var(--font-mono); font-size: var(--fs-3); color: var(--text-dim); }
-.res-score.is-good { color: var(--success); }
-.res-score.is-ok   { color: var(--warn); }
-.res-score.is-bad  { color: var(--danger); }
+.res-score.is-good { color: var(--success-ink); }
+.res-score.is-ok   { color: var(--warn-ink); }
+.res-score.is-bad  { color: var(--danger-ink); }
 
 /* ============================================================
    Пустое состояние — всегда с выходом, а не просто «пусто»
@@ -294,7 +294,7 @@
   border: 1px solid var(--accent-line);
   transition: transform var(--dur-2) var(--ease), border-color var(--dur-2) var(--ease);
 }
-.cta-k { font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: 0.14em; color: var(--accent); }
+.cta-k { font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: 0.14em; color: var(--accent-ink); }
 .cta-t { font-size: var(--fs-5); font-weight: 700; margin-top: 4px; }
 .cta-go {
   font-family: var(--font-mono); font-size: var(--fs-3); font-weight: 700;
@@ -328,4 +328,4 @@
 .auth-input { width: 100%; text-align: left; }
 .auth-sent { font-size: var(--fs-3); color: var(--text-soft); }
 .auth-sent b { color: var(--text); }
-.auth-err { color: var(--danger); font-size: var(--fs-3); }
+.auth-err { color: var(--danger-ink); font-size: var(--fs-3); }

@@ -68,7 +68,7 @@ export function renderHome(app, course) {
           ${items.map(l => `
             <a class="card" href="#/lesson/${l.id}" style="--accent:${course.accentFor(l)}">
               <div class="kicker">${String(l.n).padStart(2, '0')} · ${course.labelOf(l.aspect)}${
-                done[l.id] ? ` · <span style="color:var(--success)">${icon('check')} пройден</span>` : ''}</div>
+                done[l.id] ? ` · <span style="color:var(--success-ink)">${icon('check')} пройден</span>` : ''}</div>
               <h3 class="card-title">${l.title}</h3>
               <p class="card-note">${l.subtitle}</p>
             </a>`).join('')}

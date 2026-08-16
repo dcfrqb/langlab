@@ -48,7 +48,9 @@ export function renderPlayer(app, course, lesson) {
 
   const ctx = {
     color: accent,
+    ink: course.inkFor(lesson),
     colorOf: key => course.colorOf(key),
+    inkOf: key => course.inkOf(key),
     labels: course.timeline,
   };
 

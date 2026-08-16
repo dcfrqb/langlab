@@ -1,12 +1,15 @@
 /* ============================================================
    Палитра курса en-ru: классы, которыми размечен сам контент.
    Движок и ui/ про них не знают — у другого языка будет свой файл.
+
+   Это ТЕКСТ внутри фраз, поэтому берутся ink-варианты: в светлой
+   теме они темнее ровно настолько, чтобы читаться на белом.
    ============================================================ */
 
-.k-simple     { color: var(--c-blue); }
-.k-continuous { color: var(--c-green); }
-.k-perfect    { color: var(--c-orange); }
-.k-perfcont   { color: var(--c-purple); }
+.k-simple     { color: var(--c-blue-ink); }
+.k-continuous { color: var(--c-green-ink); }
+.k-perfect    { color: var(--c-orange-ink); }
+.k-perfcont   { color: var(--c-purple-ink); }
 
 /* подпись справа от формулы (например «— только с he/she/it») */
-.formula .lbl { color: var(--text-dim); font-size: 13px; margin-left: 10px; }
+.formula .lbl { color: var(--text-dim); font-size: var(--fs-2); margin-left: var(--s-2); }

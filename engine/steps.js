@@ -8,7 +8,9 @@ import { timeline } from './timeline.js';
 
 export function renderStep(step, ctx) {
   const s = step;
-  const tl = t => timeline(t, { color: ctx.color, colorOf: ctx.colorOf, labels: ctx.labels });
+  const tl = t => timeline(t, {
+    color: ctx.color, ink: ctx.ink, colorOf: ctx.colorOf, inkOf: ctx.inkOf, labels: ctx.labels,
+  });
 
   switch (s.type) {
     case 'concept': return `

@@ -9,10 +9,10 @@ import { QUESTIONS, TESTS } from './tests.js';
 /* Категории курса = «цветовой словарь». Ключ живёт в контенте (поле aspect),
    движок берёт отсюда только цвет и подпись. Для другого языка — свой набор. */
 const CATEGORIES = [
-  { key: 'simple',     label: 'SIMPLE',           short: 'Simple',              color: 'var(--c-blue)'   },
-  { key: 'continuous', label: 'CONTINUOUS',       short: 'Continuous',          color: 'var(--c-green)'  },
-  { key: 'perfect',    label: 'PERFECT',          short: 'Perfect',             color: 'var(--c-orange)' },
-  { key: 'perfcont',   label: 'PERF. CONTINUOUS', short: 'Perfect Continuous',  color: 'var(--c-purple)' },
+  { key: 'simple',     label: 'SIMPLE',           short: 'Simple',             color: 'var(--c-blue)',   ink: 'var(--c-blue-ink)'   },
+  { key: 'continuous', label: 'CONTINUOUS',       short: 'Continuous',         color: 'var(--c-green)',  ink: 'var(--c-green-ink)'  },
+  { key: 'perfect',    label: 'PERFECT',          short: 'Perfect',            color: 'var(--c-orange)', ink: 'var(--c-orange-ink)' },
+  { key: 'perfcont',   label: 'PERF. CONTINUOUS', short: 'Perfect Continuous', color: 'var(--c-purple)', ink: 'var(--c-purple-ink)' },
 ];
 
 /* Интерактивная карта времён на главной — фишка именно английского курса.

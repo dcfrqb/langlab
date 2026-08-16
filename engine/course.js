@@ -12,6 +12,9 @@ export function makeCourse(raw) {
     ...raw,
 
     colorOf(key) { return byKey.get(key)?.color || fallback; },
+    /* тот же цвет для ТЕКСТА: в светлой теме он темнее, иначе подпись
+       цветом фигуры на белом читается плохо */
+    inkOf(key) { return byKey.get(key)?.ink || byKey.get(key)?.color || fallback; },
     labelOf(key) { return byKey.get(key)?.label || ''; },
 
     lessonById(id) { return raw.lessons.find(l => l.id === id) || null; },
@@ -24,5 +27,6 @@ export function makeCourse(raw) {
 
     /* цвет урока/теста — движок красит им весь экран через --accent */
     accentFor(item) { return this.colorOf(item.aspect); },
+    inkFor(item) { return this.inkOf(item.aspect); },
   };
 }

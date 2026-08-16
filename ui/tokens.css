@@ -22,22 +22,27 @@
   /* ------------------------------------------------------------
      1. ПАЛИТРА (сырые значения, только для слоя ролей ниже)
      ------------------------------------------------------------ */
-  --p-blue:   light-dark(#2f62f5, #5f8bff);
-  --p-green:  light-dark(#0e9455, #35d488);
-  --p-orange: light-dark(#c1710b, #f5a63b);
-  --p-purple: light-dark(#7048dd, #ac8cf6);
-  --p-amber:  light-dark(#b07d00, #ffd233);
-  --p-red:    light-dark(#d3352f, #ff6b6b);
+  /* Цвета фигур: линии, заливки, диаграммы. В светлой теме они ЯРКИЕ —
+     тёмный «читаемый» оттенок нужен только тексту, см. --*-ink ниже.
+     Если красить фигуры текстовым цветом, светлая тема выглядит грязной. */
+  --p-blue:   light-dark(#4174ff, #5f8bff);
+  --p-green:  light-dark(#13b269, #35d488);
+  --p-orange: light-dark(#f0921a, #f5a63b);
+  --p-purple: light-dark(#8f66f5, #ac8cf6);
+  --p-amber:  light-dark(#f0b400, #ffd233);
+  --p-red:    light-dark(#f0524b, #ff6b6b);
 
-  --p-ink-0: light-dark(#0f1117, #f3f4f8);
-  --p-ink-1: light-dark(#3b4155, #b9bdca);
-  --p-ink-2: light-dark(#666d84, #7d8294);
-  --p-ink-3: light-dark(#949bad, #565b6b);
+  --p-ink-0: light-dark(#12151d, #f3f4f8);
+  --p-ink-1: light-dark(#454b5e, #b9bdca);
+  --p-ink-2: light-dark(#6b7285, #7d8294);
+  --p-ink-3: light-dark(#9aa0b2, #565b6b);
 
-  --p-paper-0: light-dark(#fbfbfd, #0a0b10);
+  /* Бумага: страница чуть серее карточек, иначе в светлой теме
+     карточка не читается как приподнятая. */
+  --p-paper-0: light-dark(#f4f6fb, #0a0b10);
   --p-paper-1: light-dark(#ffffff, #0e1017);
   --p-paper-2: light-dark(#ffffff, #14161f);
-  --p-paper-3: light-dark(#eef0f5, #1b1e29);
+  --p-paper-3: light-dark(#e9ecf4, #1b1e29);
 
   /* ------------------------------------------------------------
      2. РОЛИ — этим пользуются компоненты
@@ -60,21 +65,28 @@
   --text-dim:    var(--p-ink-2);   /* второстепенное, подписи */
   --text-faint:  var(--p-ink-3);   /* служебное: хинты, оси */
 
-  /* акцент — задаётся экраном (курс, урок, тест), это его цвет */
-  --accent:      var(--p-blue);
-  --on-accent:   light-dark(#ffffff, #06070c);
-  --accent-soft: color-mix(in oklab, var(--accent) 12%, transparent);
-  --accent-line: color-mix(in oklab, var(--accent) 45%, var(--border));
+  /* акцент — задаётся экраном (курс, урок, тест), это его цвет.
+     Два токена вместо одного, и это принципиально:
+       --accent      — фигуры: заливка кнопки, линия на оси, грань карточки
+       --accent-ink  — текст этим цветом на светлой поверхности
+     В тёмной теме они совпадают, в светлой ink темнее ровно настолько,
+     чтобы мелкий текст читался, а фигуры оставались живыми. */
+  --accent:    var(--p-blue);
+  --on-accent: light-dark(#ffffff, #06070c);
 
-  /* состояния ответа и прогресса */
+  /* состояния ответа и прогресса — та же пара «фигура / текст» */
   --success:      var(--p-green);
+  --success-ink:  light-dark(color-mix(in oklab, var(--p-green) 72%, #04140c), var(--p-green));
   --success-soft: color-mix(in oklab, var(--p-green) 12%, transparent);
   --danger:       var(--p-red);
+  --danger-ink:   light-dark(color-mix(in oklab, var(--p-red) 74%, #1a0605), var(--p-red));
   --danger-soft:  color-mix(in oklab, var(--p-red) 10%, transparent);
   --warn:         var(--p-orange);
-  --warn-soft:    color-mix(in oklab, var(--p-orange) 12%, transparent);
+  --warn-ink:     light-dark(color-mix(in oklab, var(--p-orange) 70%, #170c02), var(--p-orange));
+  --warn-soft:    color-mix(in oklab, var(--p-orange) 14%, transparent);
   --now:          var(--p-amber);   /* «сейчас» на оси времени */
-  --now-soft:     color-mix(in oklab, var(--p-amber) 12%, transparent);
+  --now-ink:      light-dark(color-mix(in oklab, var(--p-amber) 66%, #1a1200), var(--p-amber));
+  --now-soft:     color-mix(in oklab, var(--p-amber) 14%, transparent);
 
   --focus: var(--p-blue);
 
@@ -85,6 +97,13 @@
   --c-orange: var(--p-orange);
   --c-purple: var(--p-purple);
   --c-now:    var(--p-amber);
+
+  /* те же цвета для текста: в светлой теме темнее, в тёмной — те же */
+  --c-blue-ink:   light-dark(color-mix(in oklab, var(--p-blue) 74%, #0c101c), var(--p-blue));
+  --c-green-ink:  light-dark(color-mix(in oklab, var(--p-green) 72%, #04140c), var(--p-green));
+  --c-orange-ink: light-dark(color-mix(in oklab, var(--p-orange) 70%, #170c02), var(--p-orange));
+  --c-purple-ink: light-dark(color-mix(in oklab, var(--p-purple) 74%, #0d0620), var(--p-purple));
+  --c-now-ink:    light-dark(color-mix(in oklab, var(--p-amber) 66%, #1a1200), var(--p-amber));
 
   /* ------------------------------------------------------------
      3. ШКАЛЫ
@@ -137,6 +156,17 @@
   --maxw-text: 62ch;    /* длина строки, за которую не выходим */
   --maxw-stage: 640px;  /* ширина рабочей области урока и теста */
   --tap: 44px;          /* минимальная площадь нажатия */
+}
+
+/* Производные акцента объявлены для ВСЕХ элементов, а не только для :root, —
+   и это не стилистика, а необходимость. Значение var() подставляется там, где
+   свойство объявлено: объяви мы их на :root, они бы навсегда запомнили корневой
+   синий, и урок с оранжевым акцентом получал бы синюю подсветку выбора.
+   Здесь же каждый элемент считает их от того --accent, который до него дошёл. */
+*, *::before, *::after {
+  --accent-ink:  light-dark(color-mix(in oklab, var(--accent) 74%, #0c101c), var(--accent));
+  --accent-soft: color-mix(in oklab, var(--accent) 12%, transparent);
+  --accent-line: color-mix(in oklab, var(--accent) 45%, var(--border));
 }
 
 :root[data-theme="light"] { color-scheme: light; }

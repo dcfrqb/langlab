@@ -59,7 +59,9 @@ export function bindExplorer(root, course) {
     explorer.style.setProperty('--accent', course.colorOf(aspectKey));
     tl.innerHTML = timeline(ex.signature(tenseKey, aspectKey), {
       color: course.colorOf(aspectKey),
+      ink: course.inkOf(aspectKey),
       colorOf: k => course.colorOf(k),
+      inkOf: k => course.inkOf(k),
       labels: course.timeline,
     });
     centerTimelines(tl);

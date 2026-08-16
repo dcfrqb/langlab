@@ -98,7 +98,7 @@
   font-family: var(--font-mono); font-size: var(--fs-1);
   letter-spacing: var(--track-wide); text-transform: uppercase;
   padding: 6px 13px; border-radius: var(--r-pill);
-  border: 1px solid currentColor; color: var(--accent);
+  border: 1px solid currentColor; color: var(--accent-ink);
 }
 .pill .num { color: var(--text-dim); letter-spacing: 0; }
 
@@ -115,9 +115,9 @@
   text-transform: uppercase; white-space: nowrap;
   border: 1px solid currentColor; border-radius: var(--r-pill); padding: 2px 8px;
 }
-.badge-mine { color: var(--warn); }
-.badge-new  { color: var(--now); }
-.badge-soft { color: var(--c-purple); }
+.badge-mine { color: var(--warn-ink); }
+.badge-new  { color: var(--now-ink); }
+.badge-soft { color: var(--c-purple-ink); }
 
 /* ============================================================
    Поля ввода
@@ -130,8 +130,8 @@
   transition: border-color var(--dur-1) var(--ease), color var(--dur-1) var(--ease);
 }
 .input:focus { outline: none; border-color: var(--accent); }
-.input.is-correct { border-color: var(--success); color: var(--success); }
-.input.is-wrong   { border-color: var(--danger);  color: var(--danger); }
+.input.is-correct { border-color: var(--success); color: var(--success-ink); }
+.input.is-wrong   { border-color: var(--danger);  color: var(--danger-ink); }
 .input-center { text-align: center; }
 
 /* ============================================================
@@ -153,8 +153,8 @@
   color: var(--text-dim); font-weight: 400;
 }
 .opt.is-selected { border-color: var(--accent); background: var(--accent-soft); }
-.opt.is-correct  { border-color: var(--success); background: var(--success-soft); color: var(--success); animation: pop-in var(--dur-3) var(--ease); }
-.opt.is-wrong    { border-color: var(--danger);  background: var(--danger-soft);  color: var(--danger); }
+.opt.is-correct  { border-color: var(--success); background: var(--success-soft); color: var(--success-ink); animation: pop-in var(--dur-3) var(--ease); }
+.opt.is-wrong    { border-color: var(--danger);  background: var(--danger-soft);  color: var(--danger-ink); }
 .opt:disabled { cursor: default; }
 @media (hover: hover) {
   .opt:hover:not(:disabled) { border-color: var(--text-dim); background: var(--surface-raised); }
@@ -170,8 +170,8 @@
   transition: background var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
 }
 .tok.is-selected { border-color: var(--accent); background: var(--accent-soft); }
-.tok.is-correct  { border-color: var(--success); background: var(--success-soft); color: var(--success); }
-.tok.is-wrong    { border-color: var(--danger);  background: var(--danger-soft);  color: var(--danger); }
+.tok.is-correct  { border-color: var(--success); background: var(--success-soft); color: var(--success-ink); }
+.tok.is-wrong    { border-color: var(--danger);  background: var(--danger-soft);  color: var(--danger-ink); }
 .tok:disabled { cursor: default; }
 .tok.is-used { opacity: 0.28; pointer-events: none; }
 @media (hover: hover) { .tok:hover:not(:disabled) { border-color: var(--text-dim); } }
@@ -215,7 +215,7 @@
 .row-body { flex: 1; min-width: 0; }
 .row-body b { display: block; font-size: var(--fs-3); font-weight: 600; }
 .row-body small { color: var(--text-dim); font-size: var(--fs-2); }
-.row-go { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--accent); white-space: nowrap; }
+.row-go { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--accent-ink); white-space: nowrap; }
 @media (hover: hover) { .row:hover { border-color: var(--accent); transform: translateX(2px); } }
 
 /* ============================================================
@@ -226,9 +226,9 @@
   font-size: var(--fs-3); color: var(--text-soft);
   background: var(--now-soft); border: 1px solid color-mix(in oklab, var(--now) 32%, transparent);
 }
-.callout b { color: var(--now); }
+.callout b { color: var(--now-ink); }
 .callout-warn { background: var(--danger-soft); border-color: color-mix(in oklab, var(--danger) 30%, transparent); }
-.callout-warn b { color: var(--danger); }
+.callout-warn b { color: var(--danger-ink); }
 
 /* ============================================================
    Прогресс: рейка курса, сегменты теста, точки шагов
