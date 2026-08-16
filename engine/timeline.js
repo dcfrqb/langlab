@@ -112,7 +112,7 @@ export function timeline(tl, { color, colorOf = () => color, labels = {} } = {})
   else if (shape === 'wave') {
     inner += `<path class="draw" ${glow} pathLength="1" fill="none" stroke="${c}" stroke-width="3.5"
                 stroke-linecap="round" d="${sine(centerX, 84, 17, 2)}"/>
-              <circle class="pop" ${glow} cx="${centerX}" cy="120" r="7" fill="var(--bg-1)"
+              <circle class="pop" ${glow} cx="${centerX}" cy="120" r="7" fill="var(--surface-sunken)"
                 stroke="${c}" stroke-width="2" style="animation-delay:.8s"/>`;
   }
   else if (shape === 'bump') {
@@ -130,7 +130,7 @@ export function timeline(tl, { color, colorOf = () => color, labels = {} } = {})
     inner += `<path class="draw" ${glow} pathLength="1" fill="none" d="M${a} 120 L${end - 6} 120"
                 stroke="${c}" stroke-width="4" stroke-linecap="round"/>
               <path class="pop" ${glow} d="M${end} 120 l-15 -7 v14 z" fill="${c}" style="animation-delay:.8s"/>
-              <text class="checkmark" x="${end}" y="98" text-anchor="middle" fill="${c}" font-size="22">✓</text>`;
+              <text class="checkmark" x="${end - 26}" y="102" text-anchor="middle" fill="${c}" font-size="22">✓</text>`;
   }
   else if (shape === 'arc') {
     const a = X(tl.from ?? 24), b = X(tl.to ?? 68);

@@ -21,33 +21,40 @@ export function renderStep(step, ctx) {
     case 'formula': return `
       <div class="fade-seq">
         ${s.title ? `<div class="stitle">${s.title}</div>` : ''}
-        ${s.rows.map(r => `<div class="formula"><span class="lbl-l">${r.label}</span><span class="op">→</span>${r.html}</div>`).join('')}
+        <div class="formulas">
+          ${s.rows.map(r => `<div class="formula">
+            <span class="lbl-l">${r.label}</span><span class="op">→</span><span>${r.html}</span>
+          </div>`).join('')}
+        </div>
       </div>`;
 
     case 'tabs': return `
       <div class="fade-seq" style="text-align:center">
         ${s.title ? `<div class="stitle">${s.title}</div>` : ''}
-        <div class="tabbar">${s.tabs.map((t, i) =>
-          `<button type="button" data-tab="${i}" class="${i === 0 ? 'active' : ''}">${t.label}</button>`).join('')}</div>
+        <div class="tabbar" role="tablist">${s.tabs.map((t, i) =>
+          `<button type="button" role="tab" aria-selected="${i === 0}" data-tab="${i}"
+            class="${i === 0 ? 'is-active' : ''}">${t.label}</button>`).join('')}</div>
         <div class="tab-body">
           ${s.tabs.map((t, i) => `<div class="tab-panel" data-panel="${i}" ${i ? 'hidden' : ''}>
             <div class="en">${t.html}</div>${t.ru ? `<div class="ru">${t.ru}</div>` : ''}</div>`).join('')}
         </div>
       </div>`;
 
+    /* подсказка «нажми — перевод» одна на список, а не на каждой карточке */
     case 'examples': return `
       <div class="fade-seq">
         ${s.title ? `<div class="stitle" style="text-align:center">${s.title}</div>` : ''}
+        <div class="ex-hint">нажми на пример — покажу перевод</div>
         <div class="ex-list">
-          ${s.items.map(it => `<div class="rev"><div class="en">${it.en}</div>
-            <div class="ru">${it.ru}</div><div class="tap">нажми — перевод</div></div>`).join('')}
+          ${s.items.map(it => `<div class="rev" tabindex="0" role="button">
+            <div class="en">${it.en}</div><div class="ru">${it.ru}</div></div>`).join('')}
         </div>
       </div>`;
 
     case 'vs': return `
       <div class="fade-seq">
         <div class="vs">
-          <div class="vs-card"><div class="tg" style="color:var(--text-dim)">${s.left.tag}</div>
+          <div class="vs-card is-alt"><div class="tg">${s.left.tag}</div>
             <div class="en">${s.left.en}</div><div class="ru">${s.left.ru}</div></div>
           <div class="vs-card"><div class="tg">${s.right.tag}</div>
             <div class="en">${s.right.en}</div><div class="ru">${s.right.ru}</div></div>
@@ -83,18 +90,20 @@ export function renderStep(step, ctx) {
     case 'produce': return `
       <div class="fade-seq">
         <div class="stitle" style="text-align:center">${s.title || 'скажи вслух — потом проверь'}</div>
+        <div class="ex-hint">нажми на карточку — покажу ответ</div>
         <div class="ex-list">
-          ${s.items.map(it => `<div class="rev produce"><div class="prompt">${it.ru}</div>
-            <div class="answer">${it.en}</div>${it.tip ? `<div class="tip-line">${it.tip}</div>` : ''}
-            <div class="tap">нажми — проверь себя</div></div>`).join('')}
+          ${s.items.map(it => `<div class="rev" tabindex="0" role="button">
+            <div class="prompt">${it.ru}</div>
+            <div class="answer">${it.en}</div>${it.tip ? `<div class="tip-line">${it.tip}</div>` : ''}</div>`).join('')}
         </div>
       </div>`;
 
     case 'note':
-      return `<div class="fade-seq"><div class="note ${s.warn ? 'warn' : ''}">${s.html}</div></div>`;
+      return `<div class="fade-seq"><div class="callout ${s.warn ? 'callout-warn' : ''}">${s.html}</div></div>`;
 
     case 'quiz': return `
       <div class="fade-seq quiz">
+        <div class="q-type">проверь себя</div>
         <div class="q">${s.q}</div>
         <div class="opts">${s.options.map((o, i) => `<button type="button" class="opt" data-i="${i}">${o}</button>`).join('')}</div>
         <div class="explain">${s.explain || ''}${s.ru ? `<span class="ru">${s.ru}</span>` : ''}</div>
@@ -109,14 +118,21 @@ export function bindStep(root, s) {
   if (s.type === 'tabs') {
     const btns = root.querySelectorAll('[data-tab]');
     btns.forEach(b => b.addEventListener('click', () => {
-      btns.forEach(x => x.classList.remove('active'));
-      b.classList.add('active');
+      btns.forEach(x => { x.classList.remove('is-active'); x.setAttribute('aria-selected', 'false'); });
+      b.classList.add('is-active');
+      b.setAttribute('aria-selected', 'true');
       root.querySelectorAll('[data-panel]').forEach(p => { p.hidden = p.dataset.panel !== b.dataset.tab; });
     }));
   }
 
   if (s.type === 'examples' || s.type === 'produce') {
-    root.querySelectorAll('.rev').forEach(r => r.addEventListener('click', () => r.classList.toggle('open')));
+    root.querySelectorAll('.rev').forEach(r => {
+      const toggle = () => r.classList.toggle('is-open');
+      r.addEventListener('click', toggle);
+      r.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+      });
+    });
   }
 
   if (s.type === 'quiz') {
@@ -124,9 +140,9 @@ export function bindStep(root, s) {
     opts.forEach(o => o.addEventListener('click', () => {
       const i = +o.dataset.i;
       opts.forEach(x => { x.disabled = true; });
-      if (i === s.answer) o.classList.add('correct');
-      else { o.classList.add('wrong'); opts[s.answer].classList.add('correct'); }
-      root.querySelector('.explain').classList.add('show');
+      if (i === s.answer) o.classList.add('is-correct');
+      else { o.classList.add('is-wrong'); opts[s.answer].classList.add('is-correct'); }
+      root.querySelector('.explain').classList.add('is-shown');
     }));
   }
 }

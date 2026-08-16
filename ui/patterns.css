@@ -1,0 +1,331 @@
+/* ============================================================
+   PATTERNS — устойчивые сборки из примитивов.
+   Экран урока и теста, карта времён, разбор ответа, программа,
+   результаты, пустые состояния, вход.
+   ============================================================ */
+
+/* ============================================================
+   Экран-проигрыватель: урок, тест, опрос — один каркас
+   ============================================================ */
+.player { max-width: 860px; margin: 0 auto; padding-block: var(--s-4) var(--s-7); }
+
+.player-top { display: flex; align-items: center; gap: var(--s-3); margin-bottom: var(--s-5); }
+
+/* шапка экрана: бейдж, название, подзаголовок */
+.deck-head { text-align: center; margin-bottom: var(--s-5); }
+.deck-head .pill { margin-bottom: var(--s-3); }
+.deck-head h1 { font-size: var(--fs-7); margin: 0 0 var(--s-2); animation: rise var(--dur-3) var(--ease) both; }
+.deck-head .lesson-sub {
+  font-size: var(--fs-5); font-weight: 600; color: var(--accent);
+  animation: rise var(--dur-3) 50ms var(--ease) both;
+}
+/* со второго шага шапка сжимается: место нужно контенту, а не титрам */
+.player.is-deep .deck-head { margin-bottom: var(--s-4); }
+.player.is-deep .deck-head h1 { font-size: var(--fs-6); }
+.player.is-deep .deck-head .lesson-sub { display: none; }
+
+/* рабочая область */
+.stage {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 300px;
+}
+.stage > .step { width: 100%; max-width: var(--maxw-stage); margin: 0 auto; }
+.step.in { animation: card-in var(--dur-3) var(--ease) both; }
+.step.back.in { animation-name: card-in-back; }
+@media (min-width: 720px) { .stage { min-height: 380px; } }
+
+/* появление внутренних блоков шага — короткой лесенкой */
+.fade-seq > * { animation: rise var(--dur-2) var(--ease) both; }
+.fade-seq > *:nth-child(1) { animation-delay: 0ms }
+.fade-seq > *:nth-child(2) { animation-delay: 45ms }
+.fade-seq > *:nth-child(3) { animation-delay: 90ms }
+.fade-seq > *:nth-child(4) { animation-delay: 135ms }
+.fade-seq > *:nth-child(5) { animation-delay: 180ms }
+.fade-seq > *:nth-child(6) { animation-delay: 225ms }
+
+/* панель действий: на телефоне липнет к низу, на десктопе обычная */
+.controls {
+  display: flex; align-items: center; gap: var(--s-3); margin-top: var(--s-5);
+  position: sticky; bottom: 0; z-index: 20;
+  padding-block: var(--s-3) calc(var(--s-3) + env(safe-area-inset-bottom));
+  background: linear-gradient(to top, var(--surface) 62%, transparent);
+}
+.controls .btn { flex: 1; }
+.controls .btn-secondary { flex: 0 1 auto; min-width: 120px; }
+@media (min-width: 720px) {
+  .controls { position: static; padding: 0; background: none; margin-top: var(--s-6); }
+}
+
+/* счётчик шагов текстом — точки не отвечают на вопрос «сколько осталось» */
+.step-meta {
+  display: flex; align-items: center; justify-content: center; gap: var(--s-3);
+  margin-top: var(--s-4); font-family: var(--font-mono); font-size: var(--fs-1);
+  color: var(--text-faint); letter-spacing: 0.05em;
+}
+.khint { display: none; }
+@media (min-width: 900px) and (hover: hover) { .khint { display: inline; } }
+
+@keyframes card-in      { from { opacity: 0; transform: translateX(24px) } to { opacity: 1; transform: none } }
+@keyframes card-in-back { from { opacity: 0; transform: translateX(-24px) } to { opacity: 1; transform: none } }
+@keyframes rise         { from { opacity: 0; transform: translateY(10px) } to { opacity: 1; transform: none } }
+
+/* ============================================================
+   Шаг урока: заголовок мысли и текст
+   ============================================================ */
+.lead {
+  font-size: var(--fs-6); font-weight: 700; letter-spacing: -0.02em;
+  margin: 0 0 var(--s-3); color: var(--accent);
+}
+.body { font-size: var(--fs-4); color: var(--text-soft); max-width: var(--maxw-text); }
+
+/* ============================================================
+   Карта времён
+   Ось и строки аспектов — один блок: выбранная строка и её «почерк»
+   на оси должны читаться как одно целое.
+   ============================================================ */
+.explorer {
+  background: var(--surface-raised); border: 1px solid var(--border);
+  border-radius: var(--r-xl); padding: var(--s-4);
+  display: grid; gap: var(--s-4);
+}
+.explorer-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); flex-wrap: wrap; }
+.explorer-map {
+  background: var(--surface-sunken); border: 1px solid var(--border);
+  border-radius: var(--r-lg); padding: var(--s-3) 0 var(--s-2);
+}
+/* подпись под осью: что именно сейчас нарисовано */
+.explorer-caption {
+  text-align: center; font-size: var(--fs-3); color: var(--text-soft);
+  padding: 0 var(--s-4) var(--s-2);
+}
+.explorer-caption b { color: var(--accent); }
+
+.aspect-rows { display: grid; gap: var(--s-2); }
+.aspect-row {
+  position: relative; cursor: pointer; border-radius: var(--r-md);
+  padding: var(--s-3) 92px var(--s-3) var(--s-4);
+  border: 1px solid transparent;
+  transition: background var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
+}
+.aspect-row.is-active {
+  background: var(--accent-soft); border-color: var(--accent-line);
+}
+.aspect-row.is-active::before {
+  content: ''; position: absolute; left: 0; top: 10px; bottom: 10px;
+  width: 3px; border-radius: 3px; background: var(--accent);
+}
+.aspect-tag {
+  display: flex; align-items: center; gap: var(--s-2);
+  font-family: var(--font-mono); font-size: var(--fs-1); color: var(--text-dim);
+  text-transform: uppercase; letter-spacing: 0.14em; margin-bottom: 4px;
+}
+.aspect-tag .bead { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex: none; }
+.aspect-row .form { font-family: var(--font-mono); font-size: var(--fs-6); color: var(--text); }
+.aspect-row .hint { font-size: var(--fs-2); color: var(--text-dim); margin-top: 2px; }
+.row-open, .row-soon {
+  position: absolute; right: var(--s-3); top: 50%; transform: translateY(-50%);
+  font-family: var(--font-mono); font-size: var(--fs-2);
+}
+.row-soon { color: var(--text-faint); }
+@media (hover: hover) {
+  .aspect-row:hover { background: var(--surface-sunken); }
+  .aspect-row.is-active:hover { background: var(--accent-soft); }
+}
+@media (min-width: 900px) {
+  .explorer { grid-template-columns: 1fr 1fr; align-items: start; padding: var(--s-5); }
+  .explorer-head { grid-column: 1 / -1; }
+  .explorer-map { position: sticky; top: 76px; }
+}
+
+/* ============================================================
+   Программа: то, ради чего всё затевалось
+   ============================================================ */
+.program-first { border-left-width: 3px; background: var(--accent-soft); }
+.program-done {
+  padding: var(--s-4); border-radius: var(--r-lg);
+  background: var(--success-soft); border: 1px solid color-mix(in oklab, var(--success) 30%, transparent);
+  color: var(--text); font-size: var(--fs-3);
+}
+.program-done a { color: var(--success); border-bottom: 1px solid currentColor; }
+
+/* ============================================================
+   Тесты: карточка теста и разбор ответа
+   ============================================================ */
+.t-grid { display: grid; grid-template-columns: 1fr; gap: var(--s-3); }
+@media (min-width: 560px) { .t-grid { grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: var(--s-4); } }
+.t-card { padding-bottom: 50px; }
+.t-card .kicker { color: var(--accent); }
+.t-card .t-best { color: var(--success); }
+.t-card .t-go {
+  position: absolute; left: var(--s-5); bottom: var(--s-4);
+  font-family: var(--font-mono); font-size: var(--fs-2); color: var(--accent); font-weight: 600;
+}
+
+/* тип задания — говорим, что именно надо сделать */
+.q-type {
+  font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--accent); text-align: center; margin-bottom: var(--s-3);
+}
+.q {
+  font-family: var(--font-mono); font-size: var(--fs-6); color: var(--text);
+  margin-bottom: var(--s-4); text-align: center;
+}
+/* русская подсказка идёт ПОД заданием: это опора, а не заголовок */
+.q-ru { text-align: center; color: var(--text-dim); font-style: italic; font-size: var(--fs-3); margin-top: var(--s-3); }
+.pick-hint {
+  text-align: center; font-family: var(--font-mono); font-size: var(--fs-1);
+  letter-spacing: 0.1em; color: var(--text-faint); margin: -6px 0 var(--s-3);
+}
+.opt.is-selected::after { content: '✓'; float: right; color: var(--accent); font-weight: 700; }
+.opt.is-correct::after  { content: '✓'; float: right; color: var(--success); }
+.opt.is-wrong::after    { content: '✕'; float: right; color: var(--danger); }
+
+.err-sent {
+  text-align: center; font-family: var(--font-mono); font-size: var(--fs-6);
+  line-height: 2.1; max-width: 620px; margin: var(--s-1) auto 0;
+}
+.order-line {
+  min-height: 56px; display: flex; flex-wrap: wrap; gap: var(--s-2);
+  justify-content: center; align-items: center;
+  padding: var(--s-3); border-radius: var(--r-md); border: 1px dashed var(--border-strong);
+  background: var(--surface-sunken); margin: 6px auto var(--s-3); max-width: 640px;
+}
+.order-line.is-correct { border-style: solid; border-color: var(--success); }
+.order-line.is-wrong   { border-style: solid; border-color: var(--danger); }
+.order-line .ph { color: var(--text-faint); font-family: var(--font-mono); font-size: var(--fs-2); }
+.order-bank { display: flex; flex-wrap: wrap; gap: var(--s-2); justify-content: center; max-width: 640px; margin: 0 auto; }
+
+.gap-wrap { display: flex; justify-content: center; margin-top: 6px; }
+.gap-wrap .input { width: min(320px, 86%); }
+.mgap-sent {
+  text-align: center; font-family: var(--font-mono); font-size: var(--fs-6);
+  line-height: 2.4; max-width: 640px; margin: 6px auto 0; color: var(--text);
+}
+.mgap-input {
+  font-family: var(--font-mono); font-size: inherit; text-align: center; width: 5.5em;
+  padding: 4px var(--s-2); margin: 0 var(--s-1); border: 0;
+  border-bottom: 2px solid var(--accent); background: var(--surface-sunken);
+  color: var(--accent); border-radius: 6px 6px 0 0;
+}
+.mgap-input:focus { outline: none; background: var(--surface-raised); }
+.mgap-input.is-correct { border-color: var(--success); color: var(--success); }
+.mgap-input.is-wrong   { border-color: var(--danger);  color: var(--danger); }
+
+/* разбор ответа: вердикт, что ответил ты, что правильно, почему */
+.explain {
+  max-width: 520px; margin: var(--s-4) auto 0; text-align: center;
+  color: var(--text-soft); font-size: var(--fs-3);
+  opacity: 0; transform: translateY(6px); transition: all var(--dur-2) var(--ease);
+}
+.explain.is-shown { opacity: 1; transform: none; }
+.explain .verdict { font-family: var(--font-mono); font-weight: 700; font-size: var(--fs-3); letter-spacing: 0.05em; }
+.explain .verdict.is-good { color: var(--success); }
+.explain .verdict.is-bad  { color: var(--danger); }
+.explain .given { margin-top: 6px; color: var(--text-dim); }
+.explain .given b { font-family: var(--font-mono); color: var(--danger); font-weight: 600; }
+.explain .right { margin-top: 2px; color: var(--text); }
+.explain .right b { font-family: var(--font-mono); color: var(--success); }
+.explain .why-line { margin-top: var(--s-2); color: var(--text-dim); font-size: var(--fs-2); }
+.explain .ru { display: block; margin-top: var(--s-1); }
+
+/* итог теста */
+.score-verdict { font-size: var(--fs-5); font-weight: 600; }
+.score-verdict.is-good { color: var(--success); }
+.score-verdict.is-ok   { color: var(--warn); }
+.score-verdict.is-bad  { color: var(--danger); }
+.review { max-width: 640px; margin: var(--s-2) auto 0; display: grid; gap: var(--s-3); }
+.rev-item {
+  background: var(--surface-raised); border: 1px solid var(--border);
+  border-left: 3px solid var(--danger); border-radius: var(--r-md);
+  padding: var(--s-3) var(--s-4); text-align: left;
+}
+.rev-q { font-family: var(--font-mono); font-size: var(--fs-3); color: var(--text-soft); }
+.rev-ru { font-size: var(--fs-2); color: var(--text-dim); font-style: italic; margin-top: 2px; }
+.rev-a { margin-top: 6px; font-size: var(--fs-2); color: var(--text-dim); }
+.rev-a b { font-family: var(--font-mono); }
+.rev-a .was { color: var(--danger); }
+.rev-a .fix { color: var(--success); }
+.rev-w { margin-top: 6px; font-size: var(--fs-2); color: var(--text-dim); }
+.allclear {
+  text-align: center; color: var(--success); font-size: var(--fs-5);
+  font-family: var(--font-mono); padding: var(--s-6);
+}
+
+/* ============================================================
+   Сводка результатов
+   ============================================================ */
+.res-summary {
+  display: flex; gap: var(--s-5); align-items: center; flex-wrap: wrap;
+  background: var(--surface-raised); border: 1px solid var(--border);
+  border-radius: var(--r-xl); padding: var(--s-5); margin-bottom: var(--s-5);
+}
+.res-meta { flex: 1; min-width: 220px; }
+.res-verdict { font-size: var(--fs-5); font-weight: 700; }
+.res-verdict.is-good { color: var(--success); }
+.res-verdict.is-ok   { color: var(--warn); }
+.res-verdict.is-bad  { color: var(--danger); }
+.res-cover { color: var(--text-soft); font-size: var(--fs-3); margin-top: 6px; }
+.res-note { color: var(--text-dim); font-size: var(--fs-2); margin-top: var(--s-2); max-width: 52ch; }
+.res-name { flex: 1; font-size: var(--fs-3); font-weight: 600; min-width: 0; }
+.res-score { flex: 0 0 52px; text-align: right; font-family: var(--font-mono); font-size: var(--fs-3); color: var(--text-dim); }
+.res-score.is-good { color: var(--success); }
+.res-score.is-ok   { color: var(--warn); }
+.res-score.is-bad  { color: var(--danger); }
+
+/* ============================================================
+   Пустое состояние — всегда с выходом, а не просто «пусто»
+   ============================================================ */
+.empty {
+  display: grid; gap: var(--s-3); justify-items: start;
+  background: var(--surface-raised); border: 1px dashed var(--border-strong);
+  border-radius: var(--r-lg); padding: var(--s-5);
+}
+.empty-title { font-size: var(--fs-5); font-weight: 700; }
+.empty-note { color: var(--text-dim); font-size: var(--fs-3); max-width: 48ch; }
+
+/* ============================================================
+   Крупная ссылка-призыв (тесты, опрос)
+   ============================================================ */
+.cta {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--s-4); flex-wrap: wrap;
+  padding: var(--s-4) var(--s-5); border-radius: var(--r-lg);
+  background: var(--surface-raised);
+  border: 1px solid var(--accent-line);
+  transition: transform var(--dur-2) var(--ease), border-color var(--dur-2) var(--ease);
+}
+.cta-k { font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: 0.14em; color: var(--accent); }
+.cta-t { font-size: var(--fs-5); font-weight: 700; margin-top: 4px; }
+.cta-go {
+  font-family: var(--font-mono); font-size: var(--fs-3); font-weight: 700;
+  color: var(--on-accent); background: var(--accent);
+  padding: 12px var(--s-5); border-radius: var(--r-pill); white-space: nowrap;
+}
+@media (hover: hover) { .cta:hover { transform: translateY(-2px); border-color: var(--accent); } }
+
+/* ============================================================
+   Легенда цветов курса
+   ============================================================ */
+.tag-legend {
+  display: flex; flex-wrap: wrap; gap: var(--s-2) var(--s-4);
+  font-family: var(--font-mono); font-size: var(--fs-2); color: var(--text-soft);
+}
+.tag-legend span { display: inline-flex; align-items: center; gap: var(--s-2); }
+.tag-legend i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+
+/* ============================================================
+   Вход
+   ============================================================ */
+.auth-box {
+  display: grid; gap: var(--s-3); max-width: 420px; margin-top: var(--s-6);
+  padding: var(--s-5); border-radius: var(--r-lg);
+  background: var(--surface-raised); border: 1px solid var(--border);
+}
+.auth-label {
+  font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--text-dim);
+}
+.auth-input { width: 100%; text-align: left; }
+.auth-sent { font-size: var(--fs-3); color: var(--text-soft); }
+.auth-sent b { color: var(--text); }
+.auth-err { color: var(--danger); font-size: var(--fs-3); }

@@ -1,71 +1,144 @@
 /* ============================================================
-   TOKENS — единственный источник цвета, шрифта, ритма.
-   Светлая и тёмная темы описаны одной строкой на токен через
-   light-dark(): переключение = смена color-scheme на <html>.
-     data-theme отсутствует → системная тема
-     data-theme="light" / "dark" → выбор пользователя
+   TOKENS — единственный источник цвета, размера и движения.
+
+   Три слоя, и это важно:
+     1. ПАЛИТРА     — сырые цвета. В компонентах не используются никогда.
+     2. РОЛИ        — что этот цвет значит (поверхность, текст, граница,
+                      успех…). Компоненты обращаются только сюда.
+     3. ШКАЛЫ       — типографика, ритм, радиусы, движение.
+
+   Правило: если в компоненте появился --c-orange или #ffd233 — значит
+   не хватает роли, надо завести её здесь, а не красить по месту.
+
+   Светлая и тёмная описаны одной строкой на токен через light-dark():
+   переключение = смена color-scheme на <html>.
+     нет data-theme        → тема как в системе
+     data-theme="light|dark" → выбор пользователя
    ============================================================ */
 
 :root {
   color-scheme: light dark;
 
-  /* --- поверхности --- */
-  --bg:         light-dark(#fbfbfd, #0a0b10);
-  --bg-1:       light-dark(#ffffff, #0e1017);
-  --bg-2:       light-dark(#ffffff, #14161f);
-  --bg-3:       light-dark(#eef0f5, #1b1e29);
-  --grid:       light-dark(rgba(15, 20, 40, 0.035), rgba(255, 255, 255, 0.028));
-  --hairline:   light-dark(rgba(15, 20, 40, 0.10), rgba(255, 255, 255, 0.07));
-  --hairline-2: light-dark(rgba(15, 20, 40, 0.18), rgba(255, 255, 255, 0.12));
-  --veil:       light-dark(rgba(15, 20, 40, 0.06), rgba(255, 255, 255, 0.05));
+  /* ------------------------------------------------------------
+     1. ПАЛИТРА (сырые значения, только для слоя ролей ниже)
+     ------------------------------------------------------------ */
+  --p-blue:   light-dark(#2f62f5, #5f8bff);
+  --p-green:  light-dark(#0e9455, #35d488);
+  --p-orange: light-dark(#c1710b, #f5a63b);
+  --p-purple: light-dark(#7048dd, #ac8cf6);
+  --p-amber:  light-dark(#b07d00, #ffd233);
+  --p-red:    light-dark(#d3352f, #ff6b6b);
 
-  /* --- текст --- */
-  --text:       light-dark(#0f1117, #f3f4f8);
-  --text-soft:  light-dark(#3b4155, #b9bdca);
-  --text-dim:   light-dark(#666d84, #7d8294);
-  --text-faint: light-dark(#949bad, #565b6b);
+  --p-ink-0: light-dark(#0f1117, #f3f4f8);
+  --p-ink-1: light-dark(#3b4155, #b9bdca);
+  --p-ink-2: light-dark(#666d84, #7d8294);
+  --p-ink-3: light-dark(#949bad, #565b6b);
 
-  /* --- палитра курса (движок знает только эти имена) --- */
-  --c-blue:   light-dark(#2f62f5, #5f8bff);
-  --c-green:  light-dark(#0e9455, #35d488);
-  --c-orange: light-dark(#c1710b, #f5a63b);
-  --c-purple: light-dark(#7048dd, #ac8cf6);
-  --c-now:    light-dark(#b07d00, #ffd233);
+  --p-paper-0: light-dark(#fbfbfd, #0a0b10);
+  --p-paper-1: light-dark(#ffffff, #0e1017);
+  --p-paper-2: light-dark(#ffffff, #14161f);
+  --p-paper-3: light-dark(#eef0f5, #1b1e29);
 
-  --good:     light-dark(#0e9455, #35d488);
-  --bad:      light-dark(#d3352f, #ff6b6b);
+  /* ------------------------------------------------------------
+     2. РОЛИ — этим пользуются компоненты
+     ------------------------------------------------------------ */
 
-  /* текст поверх заливки акцентом */
-  --on-accent: light-dark(#ffffff, #06070c);
+  /* поверхности: от «фон страницы» к «приподнято» */
+  --surface:        var(--p-paper-0);
+  --surface-sunken: var(--p-paper-1);   /* поля ввода, вдавленные блоки */
+  --surface-raised: var(--p-paper-2);   /* карточки */
+  --surface-active: var(--p-paper-3);   /* выбранный пункт, нажатое состояние */
+  --surface-grid:   light-dark(rgba(15, 20, 40, 0.035), rgba(255, 255, 255, 0.028));
 
-  /* акцент по умолчанию — экраны переопределяют его на свой цвет */
-  --accent: var(--c-blue);
+  /* границы */
+  --border:        light-dark(rgba(15, 20, 40, 0.10), rgba(255, 255, 255, 0.07));
+  --border-strong: light-dark(rgba(15, 20, 40, 0.18), rgba(255, 255, 255, 0.12));
 
-  /* --- типографика --- */
+  /* текст: четыре ступени, дальше не дробим */
+  --text:        var(--p-ink-0);
+  --text-soft:   var(--p-ink-1);   /* основной текст абзацев */
+  --text-dim:    var(--p-ink-2);   /* второстепенное, подписи */
+  --text-faint:  var(--p-ink-3);   /* служебное: хинты, оси */
+
+  /* акцент — задаётся экраном (курс, урок, тест), это его цвет */
+  --accent:      var(--p-blue);
+  --on-accent:   light-dark(#ffffff, #06070c);
+  --accent-soft: color-mix(in oklab, var(--accent) 12%, transparent);
+  --accent-line: color-mix(in oklab, var(--accent) 45%, var(--border));
+
+  /* состояния ответа и прогресса */
+  --success:      var(--p-green);
+  --success-soft: color-mix(in oklab, var(--p-green) 12%, transparent);
+  --danger:       var(--p-red);
+  --danger-soft:  color-mix(in oklab, var(--p-red) 10%, transparent);
+  --warn:         var(--p-orange);
+  --warn-soft:    color-mix(in oklab, var(--p-orange) 12%, transparent);
+  --now:          var(--p-amber);   /* «сейчас» на оси времени */
+  --now-soft:     color-mix(in oklab, var(--p-amber) 12%, transparent);
+
+  --focus: var(--p-blue);
+
+  /* палитра курса: смысловые цвета контента (аспекты, группы).
+     Курс сам решает, что чем красить — см. content/<курс>/index.js */
+  --c-blue:   var(--p-blue);
+  --c-green:  var(--p-green);
+  --c-orange: var(--p-orange);
+  --c-purple: var(--p-purple);
+  --c-now:    var(--p-amber);
+
+  /* ------------------------------------------------------------
+     3. ШКАЛЫ
+     ------------------------------------------------------------ */
+
+  /* типографика: шрифты */
   --font-sans: -apple-system, "SF Pro Display", "SF Pro Text", "Inter",
                system-ui, "Segoe UI", Roboto, sans-serif;
   --font-mono: "SF Mono", "JetBrains Mono", "Fira Code", ui-monospace,
                Menlo, Monaco, "Cascadia Code", monospace;
 
-  /* --- радиусы --- */
-  --r-sm: 8px;  --r-md: 12px;  --r-lg: 18px;  --r-xl: 26px;  --r-pill: 999px;
+  /* типографика: размеры. Восемь ступеней — больше не заводим,
+     произвольные clamp() по месту запрещены. */
+  --fs-1: 11px;                        /* служебное: eyebrow, хинт */
+  --fs-2: 13px;                        /* подписи, мелкие метки */
+  --fs-3: 15px;                        /* мелкий текст, кнопки */
+  --fs-4: clamp(15px, 1.2vw, 17px);    /* основной текст */
+  --fs-5: clamp(17px, 2.4vw, 20px);    /* крупный текст, лид */
+  --fs-6: clamp(19px, 3.4vw, 26px);    /* подзаголовок, предложение урока */
+  --fs-7: clamp(23px, 5vw, 40px);      /* заголовок секции */
+  --fs-8: clamp(30px, 7vw, 68px);      /* заголовок экрана */
 
-  /* --- ритм --- */
+  --lh-tight: 1.1;
+  --lh-snug:  1.35;
+  --lh-text:  1.55;
+
+  --track-wide: 0.2em;    /* разрядка для eyebrow/меток капсом */
+
+  /* ритм: 4px-сетка */
   --s-1: 4px;   --s-2: 8px;   --s-3: 12px;  --s-4: 16px;
   --s-5: 24px;  --s-6: 32px;  --s-7: 48px;  --s-8: 64px;  --s-9: 96px;
 
-  /* --- тени --- */
-  --shadow:     light-dark(0 18px 44px -24px rgba(15, 20, 40, 0.35),
-                           0 20px 60px -20px rgba(0, 0, 0, 0.7));
-  --shadow-sm:  light-dark(0 2px 10px -6px rgba(15, 20, 40, 0.35),
-                           0 2px 10px -6px rgba(0, 0, 0, 0.6));
+  /* радиусы */
+  --r-sm: 8px;  --r-md: 12px;  --r-lg: 18px;  --r-xl: 26px;  --r-pill: 999px;
 
-  /* --- габариты --- */
+  /* тени */
+  --shadow:    light-dark(0 18px 44px -24px rgba(15, 20, 40, 0.35),
+                          0 20px 60px -20px rgba(0, 0, 0, 0.7));
+  --shadow-sm: light-dark(0 2px 10px -6px rgba(15, 20, 40, 0.35),
+                          0 2px 10px -6px rgba(0, 0, 0, 0.6));
+
+  /* движение: три длительности и одна кривая на весь проект */
+  --dur-1: 120ms;   /* отклик на нажатие, смена цвета */
+  --dur-2: 240ms;   /* появление блока, раскрытие */
+  --dur-3: 420ms;   /* смена шага, крупный переход */
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  /* габариты */
   --maxw: 1120px;
-  --tap: 44px;            /* минимальная площадь тапа */
+  --maxw-text: 62ch;    /* длина строки, за которую не выходим */
+  --maxw-stage: 640px;  /* ширина рабочей области урока и теста */
+  --tap: 44px;          /* минимальная площадь нажатия */
 }
 
-/* явный выбор пользователя перебивает системную тему */
 :root[data-theme="light"] { color-scheme: light; }
 :root[data-theme="dark"]  { color-scheme: dark; }
 

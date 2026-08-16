@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="light dark" />
+  <title>Дизайн-система — langlab</title>
+
+  <link rel="stylesheet" href="ui/tokens.css" />
+  <link rel="stylesheet" href="ui/base.css" />
+  <link rel="stylesheet" href="ui/primitives.css" />
+  <link rel="stylesheet" href="ui/content.css" />
+  <link rel="stylesheet" href="ui/patterns.css" />
+  <style>
+    /* только для этой страницы: сетка образцов и подписи к ним */
+    .sg-row { display: flex; flex-wrap: wrap; gap: var(--s-3); align-items: center; }
+    .sg-grid { display: grid; gap: var(--s-3); grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); }
+    .sg-name { font-family: var(--font-mono); font-size: var(--fs-1); color: var(--text-faint); margin-top: var(--s-2); }
+    .sg-swatch { height: 56px; border-radius: var(--r-md); border: 1px solid var(--border); }
+    .sg-block { padding: var(--s-4) 0; border-top: 1px solid var(--border); }
+    .sg-block:first-of-type { border-top: 0; }
+  </style>
+</head>
+<body>
+  <nav class="nav"><div class="nav-inner">
+    <a class="brand" href="/"><span class="dot"></span> langlab<span class="dim">.ui</span></a>
+    <div class="nav-links">
+      <a href="#colors" class="active">Цвет</a><a href="#type">Шрифт</a><a href="#prim">Примитивы</a><a href="#content">Контент</a>
+    </div>
+    <button class="btn btn-secondary btn-icon" id="theme" type="button" title="Сменить тему">◐</button>
+  </div></nav>
+
+  <header class="section wrap">
+    <p class="eyebrow">дизайн-система · живая страница</p>
+    <h1>Из чего собран langlab.</h1>
+    <p class="lede" style="margin-top:var(--s-4)">Эта страница рендерится из тех же файлов, что и сайт:
+      <code>ui/tokens.css</code>, <code>ui/primitives.css</code>, <code>ui/content.css</code>,
+      <code>ui/patterns.css</code>. Если образец здесь выглядит не так, как на сайте — разошлись не они,
+      а что-то сломано. Правила и решения — в <code>ui/DESIGN.md</code>.</p>
+  </header>
+
+  <!-- ===================== ЦВЕТ ===================== -->
+  <section class="section wrap" id="colors">
+    <p class="eyebrow">роли цвета</p>
+    <h2>Цвет — это роль, а не оттенок</h2>
+    <p class="lede" style="margin:var(--s-3) 0 var(--s-5)">Компоненты не знают про «оранжевый».
+      Они знают «поверхность», «граница», «опасность». Поэтому светлая и тёмная тема — один набор правил.</p>
+
+    <div class="sg-block">
+      <div class="sg-grid" id="surfaces"></div>
+    </div>
+    <div class="sg-block">
+      <div class="sg-grid" id="states"></div>
+    </div>
+    <div class="sg-block">
+      <p class="eyebrow">палитра курса — смысловые цвета контента</p>
+      <div class="sg-grid" id="course"></div>
+    </div>
+  </section>
+
+  <!-- ===================== ШРИФТ ===================== -->
+  <section class="section wrap" id="type">
+    <p class="eyebrow">типографика</p>
+    <h2>Восемь ступеней, дальше не дробим</h2>
+    <div class="sg-block">
+      <h1>Заголовок экрана — fs-8</h1><div class="sg-name">h1 · var(--fs-8)</div>
+      <h2 style="margin-top:var(--s-4)">Заголовок секции — fs-7</h2><div class="sg-name">h2 · var(--fs-7)</div>
+      <h3 style="margin-top:var(--s-4)">Заголовок карточки — fs-5</h3><div class="sg-name">h3 · var(--fs-5)</div>
+      <p class="eyebrow" style="margin-top:var(--s-4)">надзаголовок · eyebrow</p>
+      <p class="lede">Вводный абзац: чуть крупнее основного текста, ширина ограничена 62 символами,
+        чтобы глаз не терял строку.</p><div class="sg-name">.lede · var(--fs-5)</div>
+      <p class="body" style="margin-top:var(--s-4)">Основной текст объяснения. Здесь живёт всё, что человек
+        читает подряд: правило, разбор, комментарий к примеру.</p><div class="sg-name">.body · var(--fs-4)</div>
+      <div class="stitle" style="margin-top:var(--s-4)">заголовок блока внутри шага</div><div class="sg-name">.stitle</div>
+      <div class="caption">служебная строка: счётчик, хинт, подсказка про клавиши</div><div class="sg-name">.caption</div>
+    </div>
+  </section>
+
+  <!-- ===================== ПРИМИТИВЫ ===================== -->
+  <section class="section wrap" id="prim">
+    <p class="eyebrow">примитивы</p>
+    <h2>Кирпичи и все их состояния</h2>
+
+    <div class="sg-block">
+      <p class="eyebrow">кнопки</p>
+      <div class="sg-row">
+        <button class="btn btn-primary">Главное действие</button>
+        <button class="btn btn-secondary">Второстепенное</button>
+        <button class="btn btn-ghost">Третьестепенное</button>
+        <button class="btn btn-primary" disabled>Выключено</button>
+        <button class="btn btn-secondary btn-icon" title="Иконка">✓</button>
+      </div>
+      <div class="sg-name">.btn · .btn-primary / .btn-secondary / .btn-ghost / :disabled / .btn-icon</div>
+    </div>
+
+    <div class="sg-block">
+      <p class="eyebrow">метки</p>
+      <div class="sg-row">
+        <span class="pill">PERFECT <span class="num">· 8/19</span></span>
+        <span class="chip">already<small>уже</small></span>
+        <span class="badge badge-mine">твоя ошибка</span>
+        <span class="badge badge-new">новый рекорд</span>
+        <span class="badge badge-soft">пачка 2</span>
+      </div>
+      <div class="sg-name">.pill · .chip · .badge</div>
+    </div>
+
+    <div class="sg-block">
+      <p class="eyebrow">варианты ответа — все состояния сразу</p>
+      <div class="opts">
+        <button class="opt">Обычный вариант</button>
+        <button class="opt is-selected">Выбран, но ещё не проверен</button>
+        <button class="opt is-correct" disabled>Верный ответ</button>
+        <button class="opt is-wrong" disabled>Неверный ответ</button>
+        <button class="opt">С пояснением<small class="opt-note">зачем этот выбор нужен</small></button>
+      </div>
+      <div class="sg-name">.opt · .is-selected / .is-correct / .is-wrong · .opt-note</div>
+    </div>
+
+    <div class="sg-block">
+      <p class="eyebrow">слова-токены</p>
+      <div class="sg-row">
+        <button class="tok">She</button>
+        <button class="tok is-selected">are</button>
+        <button class="tok is-correct" disabled>is</button>
+        <button class="tok is-wrong" disabled>be</button>
+        <button class="tok is-used">использовано</button>
+      </div>
+      <div class="sg-name">.tok · .is-selected / .is-correct / .is-wrong / .is-used</div>
+    </div>
+
+    <div class="sg-block">
+      <p class="eyebrow">поля ввода</p>
+      <div class="sg-row">
+        <input class="input" placeholder="обычное" />
+        <input class="input is-correct" value="верно" />
+        <input class="input is-wrong" value="мимо" />
+      </div>
+      <div class="sg-name">.input · .is-correct / .is-wrong</div>
+    </div>
+
+    <div class="sg-block">
+      <p class="eyebrow">переключатели</p>
+      <div class="sg-row">
+        <div class="tabbar"><button class="is-active">+</button><button>−</button><button>?</button></div>
+        <div class="segmented"><button class="is-active">present</button><button>past</button><button>future</button></div>
+      </div>
+      <div class="sg-name">.tabbar · .segmented · .is-active</div>
+    </div>
+
+    <div class="sg-block">
+      <p class="eyebrow">прогресс</p>
+      <div class="rail" style="margin-bottom:var(--s-4)">
+        <span class="seg" style="color:var(--c-blue)"></span>
+        <span class="seg" style="color:var(--c-green)"></span>
+        <span class="seg is-here" style="color:var(--c-orange)"></span>
+        <span class="seg is-todo" style="color:var(--c-purple)"></span>
+        <span class="seg is-todo" style="color:var(--c-blue)"></span>
+      </div>
+      <div class="track" style="margin-bottom:var(--s-4)">
+        <i class="is-correct"></i><i class="is-wrong"></i><i class="is-here"></i><i></i><i></i>
+      </div>
+      <div class="dots" style="margin-bottom:var(--s-4)">
+        <i class="is-done"></i><i class="is-done"></i><i class="is-here"></i><i></i><i></i>
+      </div>
+      <div class="sg-row">
+        <div class="ring is-good"><div><div class="ring-num">8<span>/8</span></div><div class="ring-sub">100%</div></div></div>
+        <div class="ring is-ok"><div><div class="ring-num">5<span>/9</span></div><div class="ring-sub">56%</div></div></div>
+        <div class="ring is-bad"><div><div class="ring-num">1<span>/8</span></div><div class="ring-sub">13%</div></div></div>
+      </div>
+      <div class="sg-name">.rail · .track · .dots · .ring</div>
+    </div>
+
+    <div class="sg-block">
+      <p class="eyebrow">карточка, строка списка, выноска, пустое состояние</p>
+      <div class="grid" style="margin-bottom:var(--s-4)">
+        <a class="card" style="--accent:var(--c-green)">
+          <div class="kicker">04 · CONTINUOUS</div>
+          <h3 class="card-title">Present Continuous</h3>
+          <p class="card-note">прямо сейчас, в процессе</p>
+        </a>
+      </div>
+      <div class="rows" style="margin-bottom:var(--s-4)">
+        <a class="row" style="--accent:var(--c-blue)">
+          <span class="row-num">01</span>
+          <span class="row-body"><b>To be — am / is / are</b><small>самый главный глагол</small></span>
+          <span class="row-go">продолжить ›</span>
+        </a>
+      </div>
+      <div class="callout" style="margin-bottom:var(--s-3)">Приём: возьми пять слов и составь с каждым своё предложение. <b>Вслух.</b></div>
+      <div class="callout callout-warn" style="margin-bottom:var(--s-4)">Так делать <b>нельзя</b>: с точным временем Perfect не употребляют.</div>
+      <div class="empty">
+        <div class="empty-title">Пока нечего показывать.</div>
+        <div class="empty-note">У пустого экрана всегда есть выход — иначе это тупик.</div>
+        <a class="btn btn-primary">Выбрать тест</a>
+      </div>
+      <div class="sg-name">.card · .row · .callout · .empty</div>
+    </div>
+
+    <div class="sg-block">
+      <p class="eyebrow">иконки</p>
+      <div class="sg-row" id="icons"></div>
+      <div class="sg-name">ui/icons.js — цвет и размер наследуются от текста</div>
+    </div>
+  </section>
+
+  <!-- ===================== КОНТЕНТ ===================== -->
+  <section class="section wrap" id="content">
+    <p class="eyebrow">роли контента</p>
+    <h2>Язык, которым размечены уроки</h2>
+    <p class="lede" style="margin:var(--s-3) 0 var(--s-5)">Автор контента пишет смысл, а не вёрстку:
+      фраза, перевод, ключевая форма, ошибка. Как это выглядит — решает система.</p>
+
+    <div class="sg-block">
+      <div class="ex-hint">нажми на пример — покажу перевод</div>
+      <div class="ex-list" style="max-width:520px">
+        <div class="rev is-open">
+          <div class="en">I <u>have submitted</u> my application.</div>
+          <div class="ru">я подал заявку — и она сейчас лежит поданная</div>
+        </div>
+      </div>
+      <div class="sg-name">.rev · .en · u (ключевая форма) · .ru</div>
+    </div>
+
+    <div class="sg-block">
+      <div class="formulas">
+        <div class="formula"><span class="lbl-l">I / you / we</span><span class="op">→</span><span><span class="slot">have done</span></span></div>
+        <div class="formula"><span class="lbl-l">he / she / it</span><span class="op">→</span><span><span class="slot">has done</span></span></div>
+      </div>
+      <div class="sg-name">.formula · .lbl-l · .slot</div>
+    </div>
+
+    <div class="sg-block">
+      <div class="mistake" style="max-width:520px">
+        <div>
+          <div class="mrow"><span class="bad">I have finished it yesterday.</span><span class="good">I finished it yesterday.</span></div>
+          <div class="why">есть точное время — значит Past Simple, а не Perfect</div>
+        </div>
+      </div>
+      <div class="sg-name">.mistake · .mrow · .bad / .good · .why</div>
+    </div>
+
+    <div class="sg-block">
+      <div class="vs" style="max-width:560px">
+        <div class="vs-card is-alt"><div class="tg">going to</div><div class="en">I'm going to call her.</div><div class="ru">решил заранее</div></div>
+        <div class="vs-card"><div class="tg">will</div><div class="en">I'll call her.</div><div class="ru">решил прямо сейчас</div></div>
+      </div>
+      <div class="sg-name">.vs · .vs-card · .is-alt</div>
+    </div>
+  </section>
+
+  <footer class="site wrap">langlab.ui · правила — в ui/DESIGN.md</footer>
+
+  <script type="module">
+    import { icon } from './ui/icons.js';
+
+    const swatch = (name, varName) =>
+      `<div><div class="sg-swatch" style="background:var(${varName})"></div><div class="sg-name">${name}</div></div>`;
+
+    document.querySelector('#surfaces').innerHTML = [
+      ['поверхность страницы', '--surface'],
+      ['вдавленная (поля)', '--surface-sunken'],
+      ['приподнятая (карточки)', '--surface-raised'],
+      ['активная', '--surface-active'],
+      ['граница', '--border'],
+      ['граница сильная', '--border-strong'],
+    ].map(([n, v]) => swatch(n, v)).join('');
+
+    document.querySelector('#states').innerHTML = [
+      ['акцент экрана', '--accent'],
+      ['успех', '--success'],
+      ['ошибка', '--danger'],
+      ['внимание', '--warn'],
+      ['сейчас', '--now'],
+      ['фокус', '--focus'],
+    ].map(([n, v]) => swatch(n, v)).join('');
+
+    document.querySelector('#course').innerHTML = [
+      ['c-blue · simple', '--c-blue'],
+      ['c-green · continuous', '--c-green'],
+      ['c-orange · perfect', '--c-orange'],
+      ['c-purple · perfect continuous', '--c-purple'],
+    ].map(([n, v]) => swatch(n, v)).join('');
+
+    document.querySelector('#icons').innerHTML =
+      ['chevron-left', 'chevron-right', 'arrow-right', 'check', 'close', 'sun', 'moon', 'contrast', 'logout', 'spark']
+        .map(n => `<span title="${n}" style="font-size:22px">${icon(n)}</span>`).join('');
+
+    /* переключатель темы — тот же порядок, что и на сайте */
+    const order = ['system', 'light', 'dark'];
+    let i = 0;
+    document.querySelector('#theme').addEventListener('click', () => {
+      i = (i + 1) % order.length;
+      const t = order[i];
+      if (t === 'system') document.documentElement.removeAttribute('data-theme');
+      else document.documentElement.setAttribute('data-theme', t);
+      document.querySelector('#theme').textContent = t === 'light' ? '☀' : t === 'dark' ? '☾' : '◐';
+    });
+  </script>
+</body>
+</html>

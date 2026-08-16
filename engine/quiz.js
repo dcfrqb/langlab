@@ -4,6 +4,7 @@
    ============================================================ */
 import { store } from './storage.js';
 import { setKeys } from './keys.js';
+import { icon } from '../ui/icons.js';
 
 const norm = s => String(s ?? '')
   .toLowerCase().replace(/[’`]/g, "'").replace(/[.,!?;:]+$/g, '')
@@ -18,10 +19,15 @@ const shuffle = a => {
   return r;
 };
 
-const TYPE_LABEL = {
-  choose: 'выбери вариант', gap: 'впиши слово', form: 'форма слова',
-  error: 'найди ошибку', order: 'собери предложение', mgap: 'впиши слова',
-  pick: 'отметь все верные',
+/* что за задание и что от тебя хотят — одной строкой, без догадок */
+const TYPE = {
+  choose: { tag: 'выбери вариант',    how: '' },
+  gap:    { tag: 'впиши слово',       how: '' },
+  form:   { tag: 'форма слова',       how: 'поставь слово из скобок в нужную форму' },
+  error:  { tag: 'найди ошибку',      how: 'нажми на слово, которое написано неверно' },
+  order:  { tag: 'собери предложение', how: 'нажимай слова по порядку' },
+  mgap:   { tag: 'впиши слова',       how: '' },
+  pick:   { tag: 'отметь все верные', how: 'верных вариантов может быть несколько' },
 };
 
 export function answerText(q) {
@@ -32,6 +38,16 @@ export function answerText(q) {
   return Array.isArray(q.answer) ? q.answer[0] : q.answer;
 }
 
+/* что ответил человек — без этого разбор ошибки наполовину бесполезен */
+export function givenText(q, given) {
+  if (given == null || given === '' || (Array.isArray(given) && !given.length)) return '';
+  if (q.type === 'choose') return q.options[given] ?? '';
+  if (q.type === 'error') return q.tokens[given] ?? '';
+  if (q.type === 'pick') return [...given].sort().map(i => q.options[i]).join(', ');
+  if (q.type === 'mgap') return given.join(' · ');
+  return String(given);
+}
+
 const promptText = q => q.q || q.ru || (q.tokens ? q.tokens.join(' ') : '');
 
 export function renderTest(app, course, test) {
@@ -39,74 +55,88 @@ export function renderTest(app, course, test) {
   const qs = shuffle(pool).slice(0, Math.min(test.pick, pool.length));
   const total = qs.length;
   const accent = course.accentFor(test);
-  const results = [];        // { q, correct, given }
+  const hadAttempt = !!store.bestScore(course.id, test.id);   // рекорд имеет смысл только со второго захода
+  const results = [];
   let idx = 0;
-  let staged = null;         // ответ до нажатия «Проверить»
+  let staged = null;
   let checked = false;
 
   app.innerHTML = `
     <div class="player wrap" style="--accent:${accent}">
       <div class="player-top">
-        <button class="back-btn" id="back" type="button" title="Все тесты" aria-label="Все тесты">‹</button>
-        <div class="t-progress" id="tbar"></div>
+        <button class="btn btn-secondary btn-icon" id="back" type="button"
+          title="Все тесты" aria-label="Все тесты">${icon('chevron-left')}</button>
+        <div class="track" id="track"></div>
       </div>
       <div class="deck-head">
         <span class="pill">${test.mixed ? 'МИКС' : 'ТЕСТ'} <span class="num" id="qnum">· 1/${total}</span></span>
-        <h1 style="font-size:clamp(22px,5.4vw,36px)">${test.title}</h1>
+        <h1>${test.title}</h1>
       </div>
       <div class="stage" id="stage"></div>
       <div class="controls">
-        <button class="nav-btn primary" id="act" type="button" disabled>Проверить</button>
+        <button class="btn btn-primary" id="act" type="button" disabled>Проверить</button>
       </div>
-      <div class="khint">Enter — проверить / дальше · Esc — выход</div>
+      <div class="step-meta">
+        <span id="qmeta"></span>
+        <span class="khint">Enter — проверить · Esc — выход</span>
+      </div>
     </div>`;
 
   const stage = app.querySelector('#stage');
   const act = app.querySelector('#act');
-  const tbar = app.querySelector('#tbar');
+  const track = app.querySelector('#track');
   const qnum = app.querySelector('#qnum');
+  const qmeta = app.querySelector('#qmeta');
 
-  function paintBar() {
-    tbar.innerHTML = qs.map((_, i) => {
+  function paintTrack() {
+    track.innerHTML = qs.map((_, i) => {
       const r = results[i];
-      return `<i class="${r ? (r.correct ? 'ok' : 'no') : (i === idx ? 'cur' : '')}"></i>`;
+      const cls = r ? (r.correct ? 'is-correct' : 'is-wrong') : (i === idx ? 'is-here' : '');
+      return `<i class="${cls}"></i>`;
     }).join('');
+    const right = results.filter(r => r?.correct).length;
+    qmeta.textContent = `вопрос ${idx + 1} из ${total} · верно ${right}`;
   }
 
   const setAct = (label, on) => { act.textContent = label; act.disabled = !on; };
-  const typeTag = q => `<div class="q-type">${TYPE_LABEL[q.type] || ''}</div>`;
+
+  function head(q) {
+    const t = TYPE[q.type] || { tag: '', how: '' };
+    return `<div class="q-type">${t.tag}</div>${t.how ? `<div class="pick-hint">${t.how}</div>` : ''}`;
+  }
 
   /* ---------- разметка вопроса ---------- */
   function questionBody(q) {
     if (q.type === 'choose') return `
       <div class="fade-seq quiz">
-        ${typeTag(q)}
+        ${head(q)}
         <div class="q">${q.q}</div>
         <div class="opts">${q.options.map((o, i) => `<button type="button" class="opt" data-i="${i}">${o}</button>`).join('')}</div>
+        ${q.ru ? `<div class="q-ru">${q.ru}</div>` : ''}
         <div class="explain" id="exp"></div>
       </div>`;
 
     if (q.type === 'error') return `
       <div class="fade-seq quiz">
-        ${typeTag(q)}
-        <div class="q" style="font-size:13px;color:var(--text-dim)">${q.ru || ''}</div>
+        ${head(q)}
         <div class="err-sent">${q.tokens.map((w, i) => `<button type="button" class="tok" data-i="${i}">${w}</button>`).join(' ')}</div>
+        ${q.ru ? `<div class="q-ru">${q.ru}</div>` : ''}
         <div class="explain" id="exp"></div>
       </div>`;
 
     if (q.type === 'gap' || q.type === 'form') return `
       <div class="fade-seq quiz">
-        ${typeTag(q)}
+        ${head(q)}
         <div class="q">${q.q}</div>
-        <div class="gap-wrap"><input class="gap-input" id="gap" type="text" autocomplete="off"
+        <div class="gap-wrap"><input class="input input-center" id="gap" type="text" autocomplete="off"
           autocapitalize="off" spellcheck="false" enterkeyhint="done" placeholder="ответ…" /></div>
-        <div class="q-ru">${q.ru || ''}</div>
+        ${q.ru ? `<div class="q-ru">${q.ru}</div>` : ''}
         <div class="explain" id="exp"></div>
       </div>`;
 
     if (q.type === 'order') return `
       <div class="fade-seq quiz">
-        ${typeTag(q)}
+        ${head(q)}
         <div class="q">${q.ru || ''}</div>
         <div class="order-line" id="line"><span class="ph">нажимай слова по порядку</span></div>
         <div class="order-bank" id="bank">${shuffle(q.tokens).map((w, i) =>
@@ -126,18 +156,17 @@ export function renderTest(app, course, test) {
       });
       return `
       <div class="fade-seq quiz">
-        ${typeTag(q)}
+        ${head(q)}
         <div class="mgap-sent">${sent}</div>
-        <div class="q-ru">${q.ru || ''}</div>
+        ${q.ru ? `<div class="q-ru">${q.ru}</div>` : ''}
         <div class="explain" id="exp"></div>
       </div>`;
     }
 
     if (q.type === 'pick') return `
       <div class="fade-seq quiz">
-        ${typeTag(q)}
+        ${head(q)}
         <div class="q">${q.q}</div>
-        <div class="pick-hint">можно несколько</div>
         <div class="opts">${q.options.map((o, i) => `<button type="button" class="opt" data-i="${i}">${o}</button>`).join('')}</div>
         <div class="explain" id="exp"></div>
       </div>`;
@@ -151,8 +180,8 @@ export function renderTest(app, course, test) {
       const sel = q.type === 'choose' ? '.opt' : '.tok';
       root.querySelectorAll(sel).forEach(o => o.addEventListener('click', () => {
         if (checked) return;
-        root.querySelectorAll(sel).forEach(x => x.classList.remove('sel'));
-        o.classList.add('sel');
+        root.querySelectorAll(sel).forEach(x => x.classList.remove('is-selected'));
+        o.classList.add('is-selected');
         staged = +o.dataset.i;
         setAct('Проверить', true);
       }));
@@ -184,13 +213,13 @@ export function renderTest(app, course, test) {
         line.querySelectorAll('.placed').forEach(b => b.addEventListener('click', () => {
           if (checked) return;
           const w = placed.splice(+b.dataset.p, 1)[0];
-          bank.querySelector(`[data-w="${w}"]`).classList.remove('used');
+          bank.querySelector(`[data-w="${w}"]`).classList.remove('is-used');
           refresh();
         }));
       };
       bank.querySelectorAll('.bank-tok').forEach(b => b.addEventListener('click', () => {
-        if (checked || b.classList.contains('used')) return;
-        b.classList.add('used');
+        if (checked || b.classList.contains('is-used')) return;
+        b.classList.add('is-used');
         placed.push(+b.dataset.w);
         refresh();
       }));
@@ -217,8 +246,8 @@ export function renderTest(app, course, test) {
       root.querySelectorAll('.opt').forEach(o => o.addEventListener('click', () => {
         if (checked) return;
         const i = +o.dataset.i;
-        if (sel.has(i)) { sel.delete(i); o.classList.remove('sel'); }
-        else { sel.add(i); o.classList.add('sel'); }
+        if (sel.has(i)) { sel.delete(i); o.classList.remove('is-selected'); }
+        else { sel.add(i); o.classList.add('is-selected'); }
         staged = [...sel];
         setAct('Проверить', sel.size > 0);
       }));
@@ -248,39 +277,41 @@ export function renderTest(app, course, test) {
     if (q.type === 'choose' || q.type === 'error') {
       const items = root.querySelectorAll(q.type === 'choose' ? '.opt' : '.tok');
       items.forEach(x => { x.disabled = true; });
-      items[q.answer].classList.add('correct');
-      if (!correct && staged != null) items[staged].classList.add('wrong');
+      items[q.answer].classList.add('is-correct');
+      if (!correct && staged != null) items[staged].classList.add('is-wrong');
     }
     if (q.type === 'gap' || q.type === 'form') {
       const inp = root.querySelector('#gap');
       inp.disabled = true;
-      inp.classList.add(correct ? 'ok' : 'no');
+      inp.classList.add(correct ? 'is-correct' : 'is-wrong');
     }
     if (q.type === 'order') {
       root.querySelectorAll('.tok').forEach(x => { x.disabled = true; });
-      root.querySelector('#line').classList.add(correct ? 'ok' : 'no');
+      root.querySelector('#line').classList.add(correct ? 'is-correct' : 'is-wrong');
     }
     if (q.type === 'mgap') {
       [...root.querySelectorAll('.mgap-input')].forEach((inp, i) => {
         inp.disabled = true;
         const ok = q.answer[i].map(norm).includes(norm(staged ? staged[i] : ''));
-        inp.classList.add(ok ? 'ok' : 'no');
+        inp.classList.add(ok ? 'is-correct' : 'is-wrong');
       });
     }
     if (q.type === 'pick') {
       const sel = new Set(staged || []);
       root.querySelectorAll('.opt').forEach((o, i) => {
         o.disabled = true;
-        if (q.answers.includes(i)) o.classList.add('correct');
-        else if (sel.has(i)) o.classList.add('wrong');
+        if (q.answers.includes(i)) o.classList.add('is-correct');
+        else if (sel.has(i)) o.classList.add('is-wrong');
       });
     }
 
+    const given = givenText(q, staged);
     exp.innerHTML =
-      `<div class="verdict ${correct ? 'good' : 'bad'}">${correct ? '✓ верно' : '✕ мимо'}</div>` +
+      `<div class="verdict ${correct ? 'is-good' : 'is-bad'}">${correct ? '✓ верно' : '✕ мимо'}</div>` +
+      (!correct && given ? `<div class="given">ты ответил: <b>${given}</b></div>` : '') +
       (!correct ? `<div class="right">правильно: <b>${answerText(q)}</b></div>` : '') +
-      (q.why ? `<div class="why-line">${q.why}${q.mine ? ' <span class="mine-tag">твоя ошибка</span>' : ''}</div>` : '');
-    exp.classList.add('show');
+      (q.why ? `<div class="why-line">${q.why}${q.mine ? ' <span class="badge badge-mine">твоя ошибка</span>' : ''}</div>` : '');
+    exp.classList.add('is-shown');
   }
 
   function drawQuestion() {
@@ -294,7 +325,7 @@ export function renderTest(app, course, test) {
     stage.replaceChildren(div);
     bindQuestion(div, q);
     setAct('Проверить', false);
-    paintBar();
+    paintTrack();
   }
 
   function doAction() {
@@ -305,8 +336,8 @@ export function renderTest(app, course, test) {
       results[idx] = { q, correct, given: staged };
       checked = true;
       reveal(q, correct);
-      setAct(idx === total - 1 ? 'Итог ›' : 'Дальше ›', true);
-      paintBar();
+      setAct(idx === total - 1 ? 'Итог' : 'Дальше', true);
+      paintTrack();
     } else if (idx === total - 1) {
       finish();
     } else {
@@ -321,35 +352,43 @@ export function renderTest(app, course, test) {
     const pct = Math.round((correct / total) * 100);
     const wrong = results.filter(r => !r.correct);
 
-    const verdict = pct >= 90 ? { t: 'Отлично — тема закреплена.', c: 'good' }
-      : pct >= 70 ? { t: 'Хорошо. Пара мест на докрутку.', c: 'ok' }
-      : pct >= 50 ? { t: 'Нормально для тренировки — но есть что подтянуть.', c: 'ok' }
-      : { t: 'Тему стоит перепройти и вернуться.', c: 'bad' };
+    const verdict = pct >= 90 ? { t: 'Отлично — тема закреплена.', c: 'is-good' }
+      : pct >= 70 ? { t: 'Хорошо. Пара мест на докрутку.', c: 'is-ok' }
+      : pct >= 50 ? { t: 'Нормально для тренировки — но есть что подтянуть.', c: 'is-ok' }
+      : { t: 'Тему стоит перепройти и вернуться.', c: 'is-bad' };
 
     const review = wrong.length ? `
       <div class="review">
-        <div class="stitle" style="text-align:center;margin-bottom:14px">разбор промахов</div>
-        ${wrong.map(({ q }) => `<div class="rev-item">
-          <div class="rev-q">${promptText(q)}</div>
-          <div class="rev-a">правильно: <b>${answerText(q)}</b></div>
-          ${q.why ? `<div class="rev-w">${q.why}${q.mine ? ' <span class="mine-tag">твоя ошибка</span>' : ''}</div>` : ''}
-        </div>`).join('')}
+        <div class="stitle" style="text-align:center">разбор промахов</div>
+        ${wrong.map(({ q, given }) => {
+          const g = givenText(q, given);
+          return `<div class="rev-item">
+            <div class="rev-q">${promptText(q)}</div>
+            ${q.ru && q.q ? `<div class="rev-ru">${q.ru}</div>` : ''}
+            <div class="rev-a">${g ? `ты: <b class="was">${g}</b> · ` : ''}правильно: <b class="fix">${answerText(q)}</b></div>
+            ${q.why ? `<div class="rev-w">${q.why}${q.mine ? ' <span class="badge badge-mine">твоя ошибка</span>' : ''}</div>` : ''}
+          </div>`;
+        }).join('')}
       </div>` : '<div class="allclear">✓ ни одной ошибки — чисто.</div>';
 
     app.querySelector('.deck-head').innerHTML = `
-      <div class="score-ring ${verdict.c}">
-        <div class="score-num">${correct}<span>/${total}</span></div>
-        <div class="score-pct">${pct}%</div>
+      <div class="ring ${verdict.c}">
+        <div>
+          <div class="ring-num">${correct}<span>/${total}</span></div>
+          <div class="ring-sub">${pct}%</div>
+        </div>
       </div>
-      <div class="score-verdict ${verdict.c}">${verdict.t}${isBest ? ' <span class="pb">новый рекорд</span>' : ''}</div>`;
+      <div class="score-verdict ${verdict.c}" style="margin-top:var(--s-3)">${verdict.t}</div>
+      ${isBest && hadAttempt ? '<div style="margin-top:6px"><span class="badge badge-new">новый рекорд</span></div>' : ''}`;
     app.querySelector('.controls').innerHTML = `
-      <button class="nav-btn" id="retry" type="button">Пройти заново</button>
-      <button class="nav-btn primary" id="tolist" type="button">К тестам ›</button>`;
+      <button class="btn btn-secondary" id="retry" type="button">Пройти заново</button>
+      <a class="btn btn-primary" href="#/tests">К тестам ${icon('chevron-right')}</a>`;
+    app.querySelector('.step-meta').innerHTML =
+      `<span>${wrong.length ? `промахов: ${wrong.length} — разбор ниже` : 'без ошибок'}</span>`;
     stage.innerHTML = review;
-    paintBar();
+    paintTrack();
 
     app.querySelector('#retry').addEventListener('click', () => renderTest(app, course, test));
-    app.querySelector('#tolist').addEventListener('click', () => { location.hash = '#/tests'; });
     setKeys(e => { if (e.key === 'Escape') location.hash = '#/tests'; });
     window.scrollTo(0, 0);
   }

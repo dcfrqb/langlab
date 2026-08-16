@@ -7,6 +7,7 @@ import { centerTimelines } from './timeline.js';
 import { railHTML, bindRail } from './rail.js';
 import { store } from './storage.js';
 import { setKeys } from './keys.js';
+import { icon } from '../ui/icons.js';
 
 export function renderPlayer(app, course, lesson) {
   const total = lesson.steps.length;
@@ -15,9 +16,10 @@ export function renderPlayer(app, course, lesson) {
   let dir = 'fwd';
 
   app.innerHTML = `
-    <div class="player wrap" style="--accent:${accent}">
+    <div class="player wrap" id="player" style="--accent:${accent}">
       <div class="player-top">
-        <button class="back-btn" id="back" type="button" title="Все темы" aria-label="Все темы">‹</button>
+        <button class="btn btn-secondary btn-icon" id="back" type="button"
+          title="Все темы" aria-label="Все темы">${icon('chevron-left')}</button>
         <div style="flex:1;min-width:0">${railHTML(course, lesson.id)}</div>
       </div>
       <div class="deck-head">
@@ -27,17 +29,22 @@ export function renderPlayer(app, course, lesson) {
       </div>
       <div class="stage" id="stage"></div>
       <div class="controls">
-        <button class="nav-btn" id="prev" type="button">‹ Назад</button>
-        <button class="nav-btn primary" id="next" type="button">Дальше ›</button>
+        <button class="btn btn-secondary" id="prev" type="button">${icon('chevron-left')} Назад</button>
+        <button class="btn btn-primary" id="next" type="button">Дальше ${icon('chevron-right')}</button>
       </div>
-      <div class="step-dots" id="dots"></div>
-      <div class="khint">← → стрелки · Esc — выход</div>
+      <div class="step-meta">
+        <span id="stepNum"></span>
+        <span class="dots" id="dots"></span>
+        <span class="khint">← → листать · Esc — выход</span>
+      </div>
     </div>`;
 
+  const player = app.querySelector('#player');
   const stage = app.querySelector('#stage');
   const prevBtn = app.querySelector('#prev');
   const nextBtn = app.querySelector('#next');
   const dots = app.querySelector('#dots');
+  const stepNum = app.querySelector('#stepNum');
 
   const ctx = {
     color: accent,
@@ -45,9 +52,11 @@ export function renderPlayer(app, course, lesson) {
     labels: course.timeline,
   };
 
-  function paintDots() {
+  function paintMeta() {
+    stepNum.textContent = `шаг ${idx + 1} из ${total}`;
     dots.innerHTML = lesson.steps.map((_, i) =>
-      `<i class="${i === idx ? 'on' : (i < idx ? 'done' : '')}" data-d="${i}"></i>`).join('');
+      `<i class="${i === idx ? 'is-here' : (i < idx ? 'is-done' : '')}" data-d="${i}"
+        title="шаг ${i + 1}"></i>`).join('');
     dots.querySelectorAll('[data-d]').forEach(d =>
       d.addEventListener('click', () => go(+d.dataset.d)));
   }
@@ -61,18 +70,44 @@ export function renderPlayer(app, course, lesson) {
     bindStep(div, s);
     centerTimelines(div);
 
+    /* со второго шага титры урока ужимаются — место отдаём содержанию */
+    player.classList.toggle('is-deep', idx > 0);
+
     prevBtn.disabled = idx === 0;
-    nextBtn.textContent = idx === total - 1 ? 'Готово ✓' : 'Дальше ›';
-    paintDots();
+    nextBtn.innerHTML = idx === total - 1
+      ? `Урок пройден ${icon('check')}`
+      : `Дальше ${icon('chevron-right')}`;
+    paintMeta();
     if (idx === total - 1) store.markLessonDone(course.id, lesson.id);
   }
 
   function go(i) {
-    if (i >= total) { location.hash = '#/'; return; }   // конец урока → на главную
+    if (i >= total) return finish();
     if (i < 0) return;
     dir = i > idx ? 'fwd' : 'back';
     idx = i;
     drawStep();
+  }
+
+  /* финал урока: подтверждаем, что засчитано, и даём следующий шаг */
+  function finish() {
+    const next = course.lessons.find(l => l.n === lesson.n + 1);
+    player.classList.remove('is-deep');
+    app.querySelector('.deck-head').innerHTML = `
+      <span class="pill">${icon('check')} засчитано</span>
+      <h1>${lesson.title} — пройден</h1>
+      <div class="lesson-sub">Отмечен в прогрессе${next ? '. Дальше по курсу — «' + next.title + '»' : ''}.</div>`;
+    stage.innerHTML = `
+      <div class="fade-seq" style="text-align:center">
+        <p class="lede" style="margin:0 auto">Закрепить сразу — самый дешёвый способ не забыть:
+          пара минут теста прямо сейчас стоит получаса повторения через неделю.</p>
+      </div>`;
+    app.querySelector('.controls').innerHTML = `
+      <a class="btn btn-secondary" href="#/">К темам</a>
+      ${next ? `<a class="btn btn-primary" href="#/lesson/${next.id}">Следующий урок ${icon('chevron-right')}</a>`
+             : `<a class="btn btn-primary" href="#/tests">К тестам ${icon('chevron-right')}</a>`}`;
+    app.querySelector('.step-meta').innerHTML = `<a class="btn btn-ghost" href="#/tests">проверить себя тестом</a>`;
+    window.scrollTo(0, 0);
   }
 
   prevBtn.addEventListener('click', () => go(idx - 1));

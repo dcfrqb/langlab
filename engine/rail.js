@@ -5,9 +5,11 @@ import { store } from './storage.js';
 
 export function railHTML(course, currentId = null) {
   const done = store.lessons(course.id);
-  return `<div class="rail">${course.lessons.map(l => {
-    const cls = ['seg', done[l.id] ? '' : 'dim', l.id === currentId ? 'here' : ''].filter(Boolean).join(' ');
-    return `<span class="${cls}" style="color:${course.accentFor(l)}" data-go="${l.id}" title="${l.title}"></span>`;
+  return `<div class="rail" role="list">${course.lessons.map(l => {
+    const cls = ['seg', done[l.id] ? '' : 'is-todo', l.id === currentId ? 'is-here' : ''].filter(Boolean).join(' ');
+    const state = done[l.id] ? 'пройдено' : 'не пройдено';
+    return `<span class="${cls}" role="listitem" style="color:${course.accentFor(l)}"
+      data-go="${l.id}" title="${l.n}. ${l.title} — ${state}" aria-label="${l.title}, ${state}"></span>`;
   }).join('')}</div>`;
 }
 

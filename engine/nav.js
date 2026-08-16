@@ -2,12 +2,13 @@
    NAV — общая шапка экранов (бренд, разделы, аккаунт, тема).
    ============================================================ */
 import { themeButtonHTML, bindThemeButton } from './theme.js';
+import { icon } from '../ui/icons.js';
 import { api } from './api.js';
 
 const LINKS = [
-  { href: '#/',        label: 'Темы',        key: 'home' },
-  { href: '#/tests',   label: 'Тесты',       key: 'tests' },
-  { href: '#/results', label: 'Результаты',  key: 'results' },
+  { href: '#/',        label: 'Темы',       key: 'home' },
+  { href: '#/tests',   label: 'Тесты',      key: 'tests' },
+  { href: '#/results', label: 'Результаты', key: 'results' },
 ];
 
 function accountHTML(active) {
@@ -15,7 +16,8 @@ function accountHTML(active) {
     return `<a href="#/login" class="nav-acc ${active === 'login' ? 'active' : ''}">Войти</a>`;
   }
   const name = api.user.email.split('@')[0];
-  return `<button class="nav-acc" id="logoutBtn" type="button" title="${api.user.email} — выйти">${name} ⏻</button>`;
+  return `<button class="nav-acc" id="logoutBtn" type="button"
+    title="${api.user.email} — выйти" aria-label="Выйти из аккаунта ${api.user.email}">${name}${icon('logout')}</button>`;
 }
 
 export function navHTML(course, active) {

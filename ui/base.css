@@ -1,6 +1,6 @@
 /* ============================================================
-   BASE — сброс, каркас, типографика, шапка. Mobile-first:
-   базовые правила = телефон, медиа-запросы только вверх.
+   BASE — сброс, каркас страницы, типографические роли, шапка.
+   Mobile-first: базовые правила = телефон, медиа-запросы только вверх.
    ============================================================ */
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -13,14 +13,15 @@ html {
 body {
   margin: 0;
   font-family: var(--font-sans);
+  font-size: var(--fs-4);
+  line-height: var(--lh-text);
   color: var(--text);
-  background: var(--bg);
+  background: var(--surface);
   background-image:
-    linear-gradient(var(--grid) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    linear-gradient(var(--surface-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--surface-grid) 1px, transparent 1px);
   background-size: 44px 44px, 44px 44px;
   background-attachment: fixed;
-  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   min-height: 100vh;
@@ -31,18 +32,19 @@ a { color: inherit; text-decoration: none; }
 img, svg { max-width: 100%; }
 button, input { font: inherit; color: inherit; }
 button { -webkit-tap-highlight-color: transparent; }
-::selection { background: color-mix(in oklab, var(--c-blue) 30%, transparent); }
+::selection { background: color-mix(in oklab, var(--focus) 30%, transparent); }
 
+/* фокус виден всегда и одинаково — на кнопках, ссылках и карточках */
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--focus);
   outline-offset: 2px;
   border-radius: var(--r-sm);
 }
 
-* { scrollbar-width: thin; scrollbar-color: var(--hairline-2) transparent; }
+* { scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
 *::-webkit-scrollbar { width: 10px; height: 10px; }
 *::-webkit-scrollbar-thumb {
-  background: var(--hairline-2); border-radius: 999px;
+  background: var(--border-strong); border-radius: var(--r-pill);
   border: 3px solid transparent; background-clip: padding-box;
 }
 
@@ -51,7 +53,7 @@ button { -webkit-tap-highlight-color: transparent; }
    ============================================================ */
 .wrap { width: 100%; max-width: var(--maxw); margin: 0 auto; padding-inline: var(--s-4); }
 .section { padding-block: var(--s-7); }
-.section + .section { border-top: 1px solid var(--hairline); }
+.section + .section { border-top: 1px solid var(--border); }
 
 @media (min-width: 720px) {
   .wrap { padding-inline: var(--s-6); }
@@ -59,34 +61,59 @@ button { -webkit-tap-highlight-color: transparent; }
 }
 
 /* ============================================================
-   Типографика
+   Типографические роли.
+   Восемь ступеней из tokens.css, у каждой — своё назначение.
+   Произвольные размеры по месту не заводим.
    ============================================================ */
 h1, h2, h3 { font-weight: 800; letter-spacing: -0.02em; margin: 0; }
-h1 { font-size: clamp(30px, 7vw, 68px); line-height: 1.05; }
-h2 { font-size: clamp(23px, 5vw, 40px); line-height: 1.1; }
-h3 { font-size: 19px; }
+h1 { font-size: var(--fs-8); line-height: var(--lh-tight); }
+h2 { font-size: var(--fs-7); line-height: var(--lh-tight); }
+h3 { font-size: var(--fs-5); line-height: var(--lh-snug); }
 
+/* надзаголовок: маленькими капсом, всегда над h1/h2 */
 .eyebrow {
   font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.24em;
+  font-size: var(--fs-1);
+  letter-spacing: var(--track-wide);
   text-transform: uppercase;
   color: var(--text-dim);
   margin: 0 0 var(--s-3);
 }
 
-.lede { color: var(--text-soft); font-size: 16px; max-width: 62ch; }
-@media (min-width: 720px) { .lede { font-size: 18px; } .eyebrow { font-size: 12px; } }
+/* вводный абзац под заголовком */
+.lede {
+  color: var(--text-soft);
+  font-size: var(--fs-5);
+  max-width: var(--maxw-text);
+}
+
+/* заголовок блока внутри шага урока */
+.stitle {
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--track-wide);
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: var(--s-4);
+}
+
+/* служебная строка: хинт, счётчик, подсказка про клавиши */
+.caption {
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  color: var(--text-faint);
+  letter-spacing: 0.05em;
+}
 
 .mono { font-family: var(--font-mono); }
 .dim  { color: var(--text-dim); }
 .center { text-align: center; }
 
 footer.site {
-  padding: var(--s-7) 0;
+  padding-block: var(--s-7);
   color: var(--text-faint);
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: var(--fs-2);
 }
 
 /* ============================================================
@@ -95,8 +122,8 @@ footer.site {
 .nav {
   position: sticky; top: 0; z-index: 50;
   backdrop-filter: blur(14px) saturate(140%);
-  background: color-mix(in oklab, var(--bg) 78%, transparent);
-  border-bottom: 1px solid var(--hairline);
+  background: color-mix(in oklab, var(--surface) 78%, transparent);
+  border-bottom: 1px solid var(--border);
 }
 .nav-inner {
   max-width: var(--maxw); margin: 0 auto;
@@ -104,8 +131,8 @@ footer.site {
   display: flex; align-items: center; gap: var(--s-3);
 }
 .brand {
-  display: flex; align-items: center; gap: 8px;
-  font-weight: 800; letter-spacing: -0.02em; font-size: 15px;
+  display: flex; align-items: center; gap: var(--s-2);
+  font-weight: 800; letter-spacing: -0.02em; font-size: var(--fs-3);
   flex: none;
 }
 .brand .dot {
@@ -117,47 +144,28 @@ footer.site {
 
 .nav-links {
   margin-left: auto;
-  display: flex; gap: 2px;
+  display: flex; gap: 2px; align-items: center;
   overflow-x: auto;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
 }
 .nav-links::-webkit-scrollbar { display: none; }
-.nav-links a {
-  font-family: var(--font-mono); font-size: 13px; color: var(--text-dim);
-  padding: 10px 10px; border-radius: var(--r-pill); transition: .18s;
-  white-space: nowrap;
-}
-@media (min-width: 560px) { .nav-links a { padding: 10px 12px; } }
-.nav-links a.active { color: var(--text); background: var(--bg-3); }
-@media (hover: hover) {
-  .nav-links a:hover { color: var(--text); background: var(--bg-2); }
-}
-
-/* аккаунт в шапке */
-.nav-acc {
-  font-family: var(--font-mono); font-size: 13px; color: var(--text-dim);
-  padding: 10px 10px; border-radius: var(--r-pill); transition: .18s;
+.nav-links a, .nav-acc {
+  font-family: var(--font-mono); font-size: var(--fs-2); color: var(--text-dim);
+  padding: 10px; border-radius: var(--r-pill);
+  transition: color var(--dur-1) var(--ease), background var(--dur-1) var(--ease);
   white-space: nowrap; border: 0; background: transparent; cursor: pointer;
-  max-width: 12ch; overflow: hidden; text-overflow: ellipsis;
 }
-.nav-acc.active { color: var(--text); background: var(--bg-3); }
-@media (hover: hover) { .nav-acc:hover { color: var(--text); background: var(--bg-2); } }
-
-/* переключатель темы */
-.theme-btn {
-  flex: none; width: var(--tap); height: var(--tap);
-  display: grid; place-items: center;
-  border-radius: var(--r-pill); border: 1px solid var(--hairline);
-  background: var(--bg-1); color: var(--text-soft);
-  cursor: pointer; transition: .18s; font-size: 16px; line-height: 1;
+.nav-links a.active, .nav-acc.active { color: var(--text); background: var(--surface-active); }
+.nav-acc { display: inline-flex; align-items: center; gap: 6px; max-width: 14ch; }
+.nav-acc .i { color: var(--text-faint); }
+@media (hover: hover) {
+  .nav-links a:hover, .nav-acc:hover { color: var(--text); background: var(--surface-raised); }
 }
-.theme-btn:active { transform: scale(.94); }
-@media (hover: hover) { .theme-btn:hover { color: var(--text); border-color: var(--hairline-2); } }
-
+@media (min-width: 560px) { .nav-links a, .nav-acc { padding: 10px 12px; } }
 @media (min-width: 720px) {
-  .nav-inner { padding: 12px var(--s-6); gap: var(--s-5); }
-  .brand { font-size: 16px; }
+  .nav-inner { padding: var(--s-3) var(--s-6); gap: var(--s-5); }
+  .brand { font-size: var(--fs-4); }
 }
 
 /* ============================================================
@@ -167,3 +175,10 @@ footer.site {
 .scroll-x { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .only-wide { display: none; }
 @media (min-width: 720px) { .only-wide { display: block; } }
+
+/* иконки: один размер, цвет наследуется от текста */
+.i { width: 1em; height: 1em; flex: none; display: inline-block; vertical-align: -0.125em; }
+.i-lg { width: 1.25em; height: 1.25em; }
+
+/* заголовок экрана поменьше — для служебных страниц (вход, ошибка) */
+.h-sm { font-size: var(--fs-7); }

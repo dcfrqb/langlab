@@ -5,6 +5,7 @@
 import { navHTML, bindNav } from '../nav.js';
 import { store } from '../storage.js';
 import { setKeys } from '../keys.js';
+import { icon } from '../../ui/icons.js';
 import { GOALS, EXPERIENCE, surveyQuestions, assessLevel, buildProgram } from '../survey.js';
 
 export function renderSurvey(app, course) {
@@ -18,25 +19,28 @@ export function renderSurvey(app, course) {
     ${navHTML(course, 'survey')}
     <div class="player wrap" style="--accent:${accent}">
       <div class="player-top">
-        <button class="back-btn" id="back" type="button" title="На главную" aria-label="На главную">‹</button>
-        <div class="t-progress" id="bar"></div>
+        <button class="btn btn-secondary btn-icon" id="back" type="button"
+          title="На главную" aria-label="На главную">${icon('chevron-left')}</button>
+        <div class="track" id="track"></div>
       </div>
       <div class="deck-head">
         <span class="pill">ОПРОС <span class="num" id="num">· 1/${steps.length}</span></span>
-        <h1 style="font-size:clamp(22px,5.4vw,36px)">Соберём программу под тебя</h1>
+        <h1>Соберём программу под тебя</h1>
         <div class="lesson-sub" id="sub">Три минуты — и дальше идёшь по своему порядку, а не по общему списку.</div>
       </div>
       <div class="stage" id="stage"></div>
       <div class="controls">
-        <button class="nav-btn" id="prev" type="button">‹ Назад</button>
-        <button class="nav-btn primary" id="next" type="button" disabled>Дальше ›</button>
+        <button class="btn btn-secondary" id="prev" type="button">${icon('chevron-left')} Назад</button>
+        <button class="btn btn-primary" id="next" type="button" disabled>Дальше ${icon('chevron-right')}</button>
       </div>
+      <div class="step-meta"><span id="meta"></span></div>
     </div>`;
 
   const stage = app.querySelector('#stage');
-  const bar = app.querySelector('#bar');
+  const track = app.querySelector('#track');
   const num = app.querySelector('#num');
   const sub = app.querySelector('#sub');
+  const meta = app.querySelector('#meta');
   const prevBtn = app.querySelector('#prev');
   const nextBtn = app.querySelector('#next');
 
@@ -44,15 +48,16 @@ export function renderSurvey(app, course) {
   app.querySelector('#back').addEventListener('click', () => { location.hash = '#/'; });
   setKeys(e => { if (e.key === 'Escape') location.hash = '#/'; });
 
-  function paintBar() {
-    bar.innerHTML = steps.map((_, i) =>
-      `<i class="${i < idx ? 'ok' : i === idx ? 'cur' : ''}"></i>`).join('');
+  function paintTrack() {
+    track.innerHTML = steps.map((_, i) =>
+      `<i class="${i < idx ? 'is-correct' : i === idx ? 'is-here' : ''}"></i>`).join('');
     num.textContent = `· ${idx + 1}/${steps.length}`;
+    meta.textContent = `шаг ${idx + 1} из ${steps.length}`;
   }
 
   function choiceList(items, selectedKey) {
     return `<div class="opts">${items.map(it => `
-      <button type="button" class="opt ${it.key === selectedKey ? 'sel' : ''}" data-key="${it.key}">
+      <button type="button" class="opt ${it.key === selectedKey ? 'is-selected' : ''}" data-key="${it.key}">
         ${it.label}${it.note ? `<small class="opt-note">${it.note}</small>` : ''}
       </button>`).join('')}</div>`;
   }
@@ -82,15 +87,15 @@ export function renderSurvey(app, course) {
         <div class="q-type">проверка · ${q.g}</div>
         <div class="q">${q.q}</div>
         <div class="opts">${q.options.map((o, oi) =>
-          `<button type="button" class="opt ${answers.quiz[i] === oi ? 'sel' : ''}" data-key="${oi}">${o}</button>`).join('')}</div>
+          `<button type="button" class="opt ${answers.quiz[i] === oi ? 'is-selected' : ''}" data-key="${oi}">${o}</button>`).join('')}</div>
         ${q.ru ? `<div class="q-ru">${q.ru}</div>` : ''}</div>`;
     }
 
     stage.replaceChildren(div);
 
     div.querySelectorAll('.opt').forEach(btn => btn.addEventListener('click', () => {
-      div.querySelectorAll('.opt').forEach(x => x.classList.remove('sel'));
-      btn.classList.add('sel');
+      div.querySelectorAll('.opt').forEach(x => x.classList.remove('is-selected'));
+      btn.classList.add('is-selected');
       if (step === 'goal') answers.goal = btn.dataset.key;
       else if (step === 'experience') answers.experience = btn.dataset.key;
       else answers.quiz[+step.slice(1)] = +btn.dataset.key;
@@ -99,8 +104,10 @@ export function renderSurvey(app, course) {
 
     prevBtn.disabled = idx === 0;
     nextBtn.disabled = !answered(step);
-    nextBtn.textContent = idx === steps.length - 1 ? 'Собрать программу ✓' : 'Дальше ›';
-    paintBar();
+    nextBtn.innerHTML = idx === steps.length - 1
+      ? `Собрать программу ${icon('check')}`
+      : `Дальше ${icon('chevron-right')}`;
+    paintTrack();
   }
 
   const answered = step =>
@@ -124,26 +131,30 @@ export function renderSurvey(app, course) {
 
     const nextLesson = course.lessonById(program.items[0]);
     app.querySelector('.deck-head').innerHTML = `
-      <span class="pill">ГОТОВО</span>
-      <h1 style="font-size:clamp(24px,5.6vw,40px)">Уровень ${level}</h1>
+      <span class="pill">${icon('check')} готово</span>
+      <h1>Уровень ${level}</h1>
       <div class="lesson-sub">${program.note}</div>`;
     stage.innerHTML = `
-      <div class="fade-seq" style="text-align:center">
-        <div class="stitle">твоя программа</div>
-        <div class="ex-list" style="max-width:520px;margin:0 auto">
+      <div class="fade-seq">
+        <div class="stitle" style="text-align:center">твоя программа — первые шаги</div>
+        <div class="rows">
           ${program.items.slice(0, 5).map((id, i) => {
             const l = course.lessonById(id);
-            return l ? `<a class="rev" href="#/lesson/${l.id}" style="--accent:${course.accentFor(l)};text-align:left">
-              <div class="en" style="font-size:17px">${i + 1}. ${l.title}</div>
-              <div class="ru" style="max-height:none;opacity:1;margin-top:6px">${l.subtitle}</div></a>` : '';
+            return l ? `<a class="row" href="#/lesson/${l.id}" style="--accent:${course.accentFor(l)}">
+              <span class="row-num">${String(i + 1).padStart(2, '0')}</span>
+              <span class="row-body"><b>${l.title}</b><small>${l.subtitle}</small></span>
+              <span class="row-go">${icon('chevron-right')}</span></a>` : '';
           }).join('')}
         </div>
-        <p class="lede" style="margin:18px auto 0">Дальше по списку — на главной. Порядок можно поменять: скажи мне, и я пересоберу.</p>
+        <p class="lede" style="margin:var(--s-4) auto 0;text-align:center">Весь список — на главной.
+          Порядок можно поменять: скажи мне, и я пересоберу.</p>
       </div>`;
     app.querySelector('.controls').innerHTML = `
-      <a class="nav-btn" href="#/">На главную</a>
-      <a class="nav-btn primary" href="#/lesson/${nextLesson?.id || ''}">Начать первый урок ›</a>`;
-    paintBar();
+      <a class="btn btn-secondary" href="#/">На главную</a>
+      <a class="btn btn-primary" href="#/lesson/${nextLesson?.id || ''}">Начать первый урок ${icon('chevron-right')}</a>`;
+    meta.textContent = `уровень ${level} · ${correct} из ${questions.length} верно в проверке`;
+    paintTrack();
+    window.scrollTo(0, 0);
   }
 
   function go(i) {
