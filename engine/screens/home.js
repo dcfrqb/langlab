@@ -47,12 +47,25 @@ function programHTML(course, done) {
       <h2 style="margin-bottom:6px">${program.title}</h2>
       ${program.note ? `<p class="lede" style="margin:0 0 var(--s-5)">${program.note}</p>` : ''}
       <div class="rows">
-        ${left.slice(0, 5).map((l, i) => `
+        ${left.slice(0, 5).map((l, i) => {
+          /* по каким книгам собрана тема — иначе план не отличить от списка,
+             придуманного из головы, а он весь стоит на учебниках */
+          const books = course.booksOf(l);
+          return `
           <a class="row ${i === 0 ? 'program-first' : ''}" href="#/lesson/${l.id}" style="--accent:${course.accentFor(l)}">
             <span class="row-num">${String(passed + i + 1).padStart(2, '0')}</span>
-            <span class="row-body"><b>${l.title}</b><small>${l.subtitle}</small></span>
+            <span class="row-body"><b>${l.title}</b><small>${l.subtitle}</small>
+              ${books.length ? `<i class="row-src">${books.join(' + ')}</i>` : ''}</span>
             <span class="row-go">${i === 0 ? `продолжить ${icon('chevron-right')}` : icon('chevron-right')}</span>
-          </a>`).join('')}
+          </a>`;
+        }).join('')}
+        ${course.terms.length ? `
+          <a class="row" href="#/terms" style="--accent:${course.categories.at(-1).color}">
+            <span class="row-num">${icon('spark')}</span>
+            <span class="row-body"><b>Термины курса</b>
+              <small>${course.terms.length} английских терминов из тем программы</small></span>
+            <span class="row-go">повторить ${icon('chevron-right')}</span>
+          </a>` : ''}
       </div>
     </section>`;
 }

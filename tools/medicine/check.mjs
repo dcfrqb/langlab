@@ -11,7 +11,7 @@
    идёт сверяться и теряет доверие ко всему остальному.
    ============================================================ */
 
-import { readdir } from 'node:fs/promises';
+import { readdir, readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import path from 'node:path';
@@ -185,6 +185,27 @@ for (const lesson of lessons) {
       });
     }
   });
+}
+
+/* Программа в миграции дублирует список тем руками (миграция не умеет
+   импортировать модули фронта). Сверяем: опечатка в id — это тема,
+   которая молча не покажется в плане. */
+const programMigration = path.join(ROOT, 'server/pb_migrations/1786804200_medicine_program.js');
+if (existsSync(programMigration)) {
+  const text = await readFile(programMigration, 'utf8');
+  const block = text.match(/const ITEMS = \[([\s\S]*?)\];/);
+  if (!block) {
+    fail('миграция программы', 'не нашёл список ITEMS');
+  } else {
+    const ids = [...block[1].matchAll(/'([^']+)'/g)].map(m => m[1]);
+    const known = new Set(lessons.map(l => l.id));
+    ids.forEach(id => {
+      if (!known.has(id)) fail('миграция программы', `в плане есть «${id}», а темы такой нет`);
+    });
+    lessons.forEach(l => {
+      if (!ids.includes(l.id)) warn('миграция программы', `тема «${l.id}» не попала в план`);
+    });
+  }
 }
 
 /* тест без вопросов — пустой экран вместо проверки */

@@ -465,3 +465,9 @@
   margin-top: var(--s-3); font-family: var(--font-mono);
   font-size: var(--fs-1); color: var(--text-faint);
 }
+
+/* строка плана: из каких учебников собрана тема */
+.row-src {
+  display: block; margin-top: 3px; font-style: normal;
+  font-family: var(--font-mono); font-size: var(--fs-1); color: var(--text-faint);
+}

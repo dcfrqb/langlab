@@ -42,6 +42,18 @@ export function makeCourse(raw) {
     /* как назвать книгу-источник; курс без книг отдаёт id как есть */
     bookName(id) { return raw.books?.[id] || id; },
 
+    /* Из каких учебников собрана тема — по ссылкам на источник в её шагах.
+       Нужно на витрине: план должен показывать, что за ним стоят книги,
+       а не выглядеть списком слов, взятых из головы. */
+    booksOf(lesson) {
+      const ids = new Set();
+      (lesson.steps || []).forEach(step => {
+        if (step.src?.book) ids.add(step.src.book);
+        if (step.algorithm?.source?.book) ids.add(step.algorithm.source.book);
+      });
+      return [...ids].map(id => this.bookName(id));
+    },
+
     /* цвет урока/теста — движок красит им весь экран через --accent */
     accentFor(item) { return this.colorOf(item.aspect); },
     inkFor(item) { return this.inkOf(item.aspect); },
