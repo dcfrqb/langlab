@@ -2,11 +2,26 @@
    STEPS — рендер одного шага урока и его поведение.
    Типы шагов — контракт между контентом и движком:
      concept · formula · tabs · examples · vs · markers
-     mistake · scale · produce · note · quiz
+     mistake · scale · produce · note · quiz · algorithm
+     table (сравнение в столбцах) · terms (термины темы)
    ============================================================ */
 import { timeline } from './timeline.js';
+import { algorithmHTML, bindAlgorithm } from './algorithm.js';
+
+/* Ссылка на учебник у шага-выжимки. Пишем печатный номер страницы —
+   тот, что человек увидит, открыв книгу: выжимке надо верить, а для
+   этого её должно быть можно перепроверить за десять секунд. */
+function sourceLine(s, ctx) {
+  if (!s.src) return '';
+  const book = ctx?.bookName?.(s.src.book) || s.src.book;
+  return `<div class="step-src">${book}, стр. ${s.src.page}</div>`;
+}
 
 export function renderStep(step, ctx) {
+  return stepBody(step, ctx) + sourceLine(step, ctx);
+}
+
+function stepBody(step, ctx) {
   const s = step;
   const tl = t => timeline(t, {
     color: ctx.color, ink: ctx.ink, colorOf: ctx.colorOf, inkOf: ctx.inkOf, labels: ctx.labels,
@@ -103,6 +118,41 @@ export function renderStep(step, ctx) {
     case 'note':
       return `<div class="fade-seq"><div class="callout ${s.warn ? 'callout-warn' : ''}">${s.html}</div></div>`;
 
+    case 'algorithm': return algorithmHTML(s.algorithm, ctx);
+
+    /* Сравнение в столбцах — основная форма First Aid: три похожих
+       состояния и строки-признаки, по которым они расходятся.
+       Первый столбец липкий: на телефоне таблица уезжает вбок,
+       и без него непонятно, чей это признак. */
+    case 'table': return `
+      <div class="fade-seq">
+        ${s.title ? `<div class="stitle">${s.title}</div>` : ''}
+        ${s.lede ? `<p class="body">${s.lede}</p>` : ''}
+        <div class="dtable-scroll">
+          <table class="dtable">
+            <thead><tr><th></th>${s.cols.map(c => `<th>${c}</th>`).join('')}</tr></thead>
+            <tbody>${s.rows.map(r => `<tr>
+              <th scope="row">${r.label}</th>
+              ${r.cells.map(cell => `<td>${cell}</td>`).join('')}
+            </tr>`).join('')}</tbody>
+          </table>
+        </div>
+        ${s.note ? `<p class="dtable-note">${s.note}</p>` : ''}
+      </div>`;
+
+    /* Термины: английское слово — главное, оно же будет на экзамене */
+    case 'terms': return `
+      <div class="fade-seq">
+        ${s.title ? `<div class="stitle">${s.title}</div>` : ''}
+        <div class="terms">
+          ${s.items.map(t => `<div class="term">
+            <div class="term-en">${t.en}</div>
+            <div class="term-ru">${t.ru}</div>
+            ${t.hint ? `<div class="term-hint">${t.hint}</div>` : ''}
+          </div>`).join('')}
+        </div>
+      </div>`;
+
     case 'quiz': return `
       <div class="fade-seq quiz">
         <div class="q-type">проверь себя</div>
@@ -117,6 +167,8 @@ export function renderStep(step, ctx) {
 }
 
 export function bindStep(root, s) {
+  if (s.type === 'algorithm') bindAlgorithm(root, s.algorithm);
+
   if (s.type === 'tabs') {
     const btns = root.querySelectorAll('[data-tab]');
     btns.forEach(b => b.addEventListener('click', () => {

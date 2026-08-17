@@ -13,7 +13,10 @@ import { icon } from '../../ui/icons.js';
 function programHTML(course, done) {
   const program = store.program(course.id);
 
+  /* опрос на уровень — вещь языковая (A1…B2, «заговорить»). Курсу без него
+     не предлагаем: программу такому человеку собирают руками. */
   if (!program) {
+    if (course.survey === false) return '';
     return `
       <section class="section wrap">
         <a class="cta" href="#/survey" style="--accent:${course.categories[0].color}">
@@ -82,8 +85,9 @@ export function renderHome(app, course) {
     <header class="section wrap">
       <p class="eyebrow">${course.eyebrow}</p>
       <h1>${course.tagline}</h1>
-      <p class="lede" style="margin-top:var(--s-4)">Выбирай тему, листай карточки с анимированными
-        таймлайнами, проверяй себя. Прогресс сохраняется. Пройдено: <b>${doneCount} из ${course.lessonCount}</b>.</p>
+      <p class="lede" style="margin-top:var(--s-4)">${course.homeLede
+        || 'Выбирай тему, листай карточки с анимированными таймлайнами, проверяй себя. Прогресс сохраняется. Пройдено: '
+        }<b>${doneCount} из ${course.lessonCount}</b>.</p>
 
       <div style="margin:var(--s-5) 0 var(--s-2)">${railHTML(course)}</div>
 
@@ -91,10 +95,11 @@ export function renderHome(app, course) {
         ${course.categories.map(c => `<span><i style="background:${c.color}"></i> ${c.short}</span>`).join('')}
       </div>
 
-      <a class="cta" href="#/tests" style="--accent:${course.categories.at(-1).color};margin-top:var(--s-5)">
-        <div><div class="cta-k">проверь себя</div><div class="cta-t">Тесты по всем темам</div></div>
-        <span class="cta-go">пройти ${icon('chevron-right')}</span>
-      </a>
+      ${course.tests.length ? `
+        <a class="cta" href="#/tests" style="--accent:${course.categories.at(-1).color};margin-top:var(--s-5)">
+          <div><div class="cta-k">проверь себя</div><div class="cta-t">Тесты по всем темам</div></div>
+          <span class="cta-go">пройти ${icon('chevron-right')}</span>
+        </a>` : ''}
     </header>
 
     ${programHTML(course, done)}

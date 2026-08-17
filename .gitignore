@@ -21,3 +21,8 @@ __pycache__/
 # backend data (когда появится)
 /server/pb_data/
 /server/*.db
+
+# учебники (вес и права) и рабочая выжимка из них
+/content/medicine/*.pdf
+/tools/.venv/
+/tools/medicine/out/

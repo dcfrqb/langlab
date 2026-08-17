@@ -31,6 +31,9 @@
   --p-purple: light-dark(#8f66f5, #ac8cf6);
   --p-amber:  light-dark(#f0b400, #ffd233);
   --p-red:    light-dark(#f0524b, #ff6b6b);
+  /* добавлены под медицинский курс: там предметов восемь, а не четыре аспекта */
+  --p-teal:   light-dark(#0aa6a6, #2fd0cb);
+  --p-pink:   light-dark(#e05397, #f27ab4);
 
   --p-ink-0: light-dark(#12151d, #f3f4f8);
   --p-ink-1: light-dark(#454b5e, #b9bdca);
@@ -96,6 +99,8 @@
   --c-green:  var(--p-green);
   --c-orange: var(--p-orange);
   --c-purple: var(--p-purple);
+  --c-teal:   var(--p-teal);
+  --c-pink:   var(--p-pink);
   --c-now:    var(--p-amber);
 
   /* те же цвета для текста: в светлой теме темнее, в тёмной — те же */
@@ -103,6 +108,8 @@
   --c-green-ink:  light-dark(color-mix(in oklab, var(--p-green) 72%, #04140c), var(--p-green));
   --c-orange-ink: light-dark(color-mix(in oklab, var(--p-orange) 70%, #170c02), var(--p-orange));
   --c-purple-ink: light-dark(color-mix(in oklab, var(--p-purple) 74%, #0d0620), var(--p-purple));
+  --c-teal-ink:   light-dark(color-mix(in oklab, var(--p-teal) 72%, #04161a), var(--p-teal));
+  --c-pink-ink:   light-dark(color-mix(in oklab, var(--p-pink) 74%, #1a0512), var(--p-pink));
   --c-now-ink:    light-dark(color-mix(in oklab, var(--p-amber) 66%, #1a1200), var(--p-amber));
 
   /* ------------------------------------------------------------

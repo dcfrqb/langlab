@@ -92,6 +92,20 @@ export const sync = {
     flushing = false;
   },
 
+  /* какой курс у человека назначен: у него программа по медицине —
+     значит открывать надо медицину, а не общий курс по умолчанию */
+  async activeCourse() {
+    if (!api.isAuthed) return null;
+    try {
+      const programs = await api.list('programs', {
+        filter: api.mine('active = true'), sort: '-updated', perPage: 1,
+      });
+      return programs[0]?.course || null;
+    } catch {
+      return null;                                   // оффлайн — остаёмся где были
+    }
+  },
+
   /* забрать своё из БД и влить в локальное состояние */
   async pull(courseId) {
     if (!api.isAuthed) return false;

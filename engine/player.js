@@ -52,6 +52,7 @@ export function renderPlayer(app, course, lesson) {
     colorOf: key => course.colorOf(key),
     inkOf: key => course.inkOf(key),
     labels: course.timeline,
+    bookName: id => course.bookName(id),
   };
 
   function paintMeta() {

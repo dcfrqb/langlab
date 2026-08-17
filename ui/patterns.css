@@ -329,3 +329,139 @@
 .auth-sent { font-size: var(--fs-3); color: var(--text-soft); }
 .auth-sent b { color: var(--text); }
 .auth-err { color: var(--danger-ink); font-size: var(--fs-3); }
+
+/* ============================================================
+   Клинический алгоритм: дерево решений внутри урока.
+   Виды узлов различаются весом и рамкой, а не своим цветом:
+   на экране один акцент — цвет темы, и он остаётся один.
+   ============================================================ */
+.algo { display: grid; gap: var(--s-4); }
+.algo-top { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); flex-wrap: wrap; }
+.algo-top .stitle { margin: 0; text-align: left; }
+.algo-en { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--text-dim); font-style: normal; }
+.algo-lede { margin: 0; }
+.algo-src { font-size: var(--fs-1); color: var(--text-faint); font-family: var(--font-mono); }
+
+/* --- пройденный путь: он же способ переиграть развилку --- */
+.algo-path { display: flex; align-items: center; flex-wrap: wrap; gap: var(--s-1); }
+.algo-crumb {
+  font-size: var(--fs-2); color: var(--text-dim); cursor: pointer;
+  background: transparent; border: 0; padding: 4px 6px; border-radius: var(--r-sm);
+  text-align: left;
+}
+.algo-crumb-sep { color: var(--text-faint); display: inline-flex; }
+.algo-crumb-sep svg { width: 12px; height: 12px; }
+@media (hover: hover) { .algo-crumb:hover { color: var(--accent-ink); background: var(--surface-active); } }
+
+/* --- текущий узел --- */
+.algo-node {
+  background: var(--surface-raised); border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--r-md); padding: var(--s-4);
+}
+.algo-node.is-dx { border-color: var(--accent); background: var(--accent-soft); }
+.algo-node.is-tx { border-style: dashed; }
+.algo-kind {
+  font-family: var(--font-mono); font-size: var(--fs-1); text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--text-faint);
+}
+.algo-node.is-dx .algo-kind, .algo-node.is-tx .algo-kind { color: var(--accent-ink); }
+.algo-label { font-size: var(--fs-5); font-weight: 700; letter-spacing: -0.01em; margin-top: 4px; }
+.algo-node .algo-en { display: block; margin-top: 2px; }
+.algo-why { margin: var(--s-3) 0 0; font-size: var(--fs-3); color: var(--text-soft); }
+.algo-note { margin: var(--s-2) 0 0; font-size: var(--fs-2); color: var(--text-dim); }
+
+/* --- вопрос развилки и ответы --- */
+.algo-ask { font-size: var(--fs-4); font-weight: 600; text-align: center; }
+.algo-branches { display: grid; gap: var(--s-2); }
+.algo-branch {
+  display: block; width: 100%; text-align: left; cursor: pointer;
+  background: var(--surface-sunken); border: 1px solid var(--border);
+  border-radius: var(--r-md); padding: var(--s-3) var(--s-4); min-height: var(--tap);
+  transition: border-color var(--dur-1) var(--ease), transform var(--dur-1) var(--ease);
+}
+.algo-branch b { display: block; font-size: var(--fs-3); font-weight: 600; color: var(--text); }
+.algo-branch small { display: block; margin-top: 2px; font-family: var(--font-mono); font-size: var(--fs-1); color: var(--text-dim); }
+.algo-branch.is-only { text-align: center; }
+.algo-branch:active { transform: scale(0.995); }
+@media (hover: hover) { .algo-branch:hover { border-color: var(--accent); } }
+
+/* --- финал ветки --- */
+.algo-end {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); flex-wrap: wrap;
+  font-size: var(--fs-3); color: var(--accent-ink);
+}
+
+/* --- вся карта: то же дерево целиком --- */
+.algo-map, .algo-map ul { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-1); }
+.algo-map ul { margin-top: var(--s-1); }
+.algo-map-row { padding-left: var(--s-4); border-left: 1px solid var(--border); }
+.algo-map > .algo-map-row { padding-left: 0; border-left: 0; }
+.algo-map-edge {
+  display: inline-block; font-family: var(--font-mono); font-size: var(--fs-1);
+  color: var(--text-dim); margin-bottom: 2px;
+}
+.algo-map-node { display: block; padding: 6px var(--s-2); border-radius: var(--r-sm); }
+.algo-map-node b { font-size: var(--fs-3); font-weight: 600; }
+.algo-map-node i { font-family: var(--font-mono); font-size: var(--fs-1); color: var(--text-dim); font-style: normal; margin-left: var(--s-2); }
+.algo-map-node em { font-size: var(--fs-1); color: var(--text-faint); font-style: normal; margin-left: var(--s-2); }
+.algo-map-node.is-dx { background: var(--surface-active); }
+.algo-map-node.is-dx b { color: var(--accent-ink); }
+.algo-map-node.is-tx b { font-weight: 500; color: var(--text-soft); }
+.algo-map-node.is-repeat b { color: var(--text-dim); font-weight: 500; }
+
+/* ============================================================
+   Таблица-сравнение: три похожих состояния и строки-признаки.
+   На телефоне уезжает вбок, поэтому первый столбец липкий —
+   иначе непонятно, чей это признак.
+   ============================================================ */
+/* без боковых отступов: липкий столбец прилипает к внутреннему краю
+   контента, и любой padding превращается в щель, через которую видно
+   уезжающий текст */
+.dtable-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.dtable { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 520px; font-size: var(--fs-3); }
+.dtable th, .dtable td { padding: var(--s-3); text-align: left; vertical-align: top; border-bottom: 1px solid var(--border); }
+.dtable thead th {
+  font-family: var(--font-mono); font-size: var(--fs-1); text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--accent-ink); white-space: normal;
+  border-bottom: 1px solid var(--border-strong);
+}
+/* липкими должны быть и подпись строки, и пустой угол шапки:
+   иначе при прокрутке названия столбцов проезжают поверх подписей */
+.dtable tbody th, .dtable thead th:first-child {
+  position: sticky; left: 0; z-index: 1;
+  background: var(--surface); box-shadow: 1px 0 0 var(--border);
+}
+.dtable tbody th {
+  font-weight: 600; color: var(--text); font-size: var(--fs-2);
+  min-width: 116px;
+}
+.dtable td { color: var(--text-soft); }
+.dtable tbody tr:last-child th, .dtable tbody tr:last-child td { border-bottom: 0; }
+.dtable-note { margin: var(--s-3) 0 0; font-size: var(--fs-2); color: var(--text-dim); }
+
+/* ============================================================
+   Термины: английское слово главное — оно будет на экзамене
+   ============================================================ */
+.terms { display: grid; gap: var(--s-2); }
+.term {
+  background: var(--surface-raised); border: 1px solid var(--border);
+  border-left: 3px solid var(--accent); border-radius: var(--r-md);
+  padding: var(--s-3) var(--s-4);
+}
+.term-en { font-family: var(--font-mono); font-size: var(--fs-4); font-weight: 600; color: var(--text); }
+.term-ru { font-size: var(--fs-3); color: var(--text-soft); margin-top: 2px; }
+.term-hint { font-size: var(--fs-2); color: var(--text-dim); margin-top: 4px; }
+
+/* глоссарий: те же термины отдельным экраном, с поиском */
+.gloss-search { margin-bottom: var(--s-4); }
+.gloss-group { margin-top: var(--s-5); }
+.gloss-group > .eyebrow { margin-bottom: var(--s-2); }
+.gloss-empty { color: var(--text-dim); font-size: var(--fs-3); }
+.term-of { font-size: var(--fs-1); color: var(--text-faint); font-family: var(--font-mono); margin-top: 4px; }
+
+/* ссылка на учебник под шагом-выжимкой */
+.step-src {
+  margin-top: var(--s-3); font-family: var(--font-mono);
+  font-size: var(--fs-1); color: var(--text-faint);
+}

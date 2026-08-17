@@ -26,8 +26,9 @@ export function renderTestsHome(app, course) {
     <header class="section wrap" style="padding-bottom:var(--s-4)">
       <p class="eyebrow">проверь себя · разные типы вопросов</p>
       <h1>Тесты по всем темам.</h1>
-      <p class="lede" style="margin-top:var(--s-4)">Вопросы вперемешку: выбрать вариант, вписать слово,
-        найти ошибку, собрать предложение. Состав меняется при каждом заходе, в конце — счёт и разбор
+      <p class="lede" style="margin-top:var(--s-4)">${course.testsLede
+        || 'Вопросы вперемешку: выбрать вариант, вписать слово, найти ошибку, собрать предложение.'
+        } Состав меняется при каждом заходе, в конце — счёт и разбор
         промахов. <b>Рубеж</b> — тест по одной теме, <b>микс</b> — по всем сразу.</p>
     </header>
     <section class="section wrap" style="padding-top:var(--s-5)">

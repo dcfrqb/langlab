@@ -5,9 +5,12 @@ import { themeButtonHTML, bindThemeButton } from './theme.js';
 import { icon } from '../ui/icons.js';
 import { api } from './api.js';
 
-const LINKS = [
+/* «Тесты» показываем только курсу, у которого они есть: у медицины
+   вместо них повторение алгоритмов, и пустая вкладка только сбивала бы. */
+const LINKS = course => [
   { href: '#/',        label: 'Темы',       key: 'home' },
-  { href: '#/tests',   label: 'Тесты',      key: 'tests' },
+  ...(course.terms?.length ? [{ href: '#/terms', label: 'Термины', key: 'terms' }] : []),
+  ...(course.tests?.length ? [{ href: '#/tests', label: 'Тесты', key: 'tests' }] : []),
   { href: '#/results', label: 'Результаты', key: 'results' },
 ];
 
@@ -25,7 +28,7 @@ export function navHTML(course, active) {
     <nav class="nav"><div class="nav-inner">
       <a class="brand" href="#/"><span class="dot"></span> ${course.brand.name}<span class="dim">${course.brand.suffix}</span></a>
       <div class="nav-links">
-        ${LINKS.map(l => `<a href="${l.href}" class="${l.key === active ? 'active' : ''}">${l.label}</a>`).join('')}
+        ${LINKS(course).map(l => `<a href="${l.href}" class="${l.key === active ? 'active' : ''}">${l.label}</a>`).join('')}
         ${accountHTML(active)}
       </div>
       ${themeButtonHTML()}

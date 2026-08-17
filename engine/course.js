@@ -21,9 +21,26 @@ export function makeCourse(raw) {
     lessonsByGroup(group) { return raw.lessons.filter(l => l.group === group); },
     get lessonCount() { return raw.lessons.length; },
 
+    /* Глоссарий не хранится отдельно: термины живут в уроках, где их
+       и учат, а экран словаря собирается из шагов type:'terms'.
+       Иначе список и уроки разъезжаются — и словарь начинает врать. */
+    get terms() {
+      const out = [];
+      raw.lessons.forEach(lesson => {
+        (lesson.steps || []).forEach(step => {
+          if (step.type !== 'terms') return;
+          (step.items || []).forEach(item => out.push({ ...item, lesson }));
+        });
+      });
+      return out;
+    },
+
     testById(id) { return raw.tests.find(t => t.id === id) || null; },
     poolFor(test) { return raw.questions.filter(test.filter); },
     testSize(test) { return Math.min(test.pick, this.poolFor(test).length); },
+
+    /* как назвать книгу-источник; курс без книг отдаёт id как есть */
+    bookName(id) { return raw.books?.[id] || id; },
 
     /* цвет урока/теста — движок красит им весь экран через --accent */
     accentFor(item) { return this.colorOf(item.aspect); },
