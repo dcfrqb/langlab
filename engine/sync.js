@@ -92,15 +92,22 @@ export const sync = {
     flushing = false;
   },
 
-  /* какой курс у человека назначен: у него программа по медицине —
-     значит открывать надо медицину, а не общий курс по умолчанию */
+  /* Какой курс у человека назначен: у него программа по медицине —
+     значит открывать надо медицину, а не общий курс по умолчанию.
+
+     Назначенная руками программа (source:'hand') главнее собранной опросом:
+     иначе случайная анонимная программа, приехавшая в аккаунт при входе,
+     перетягивает человека на чужой курс. По дате этого не различить —
+     самопальная почти всегда свежее. */
   async activeCourse() {
     if (!api.isAuthed) return null;
     try {
       const programs = await api.list('programs', {
-        filter: api.mine('active = true'), sort: '-updated', perPage: 1,
+        filter: api.mine('active = true'), sort: '-updated',
       });
-      return programs[0]?.course || null;
+      if (!programs.length) return null;
+      const assigned = programs.find(p => p.source === 'hand');
+      return (assigned || programs[0]).course;
     } catch {
       return null;                                   // оффлайн — остаёмся где были
     }
