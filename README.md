@@ -35,13 +35,13 @@ langlab/
     router.js            hash-маршруты
     player.js            плеер урока
     quiz.js              движок тестов (7 типов вопросов)
-    steps.js             рендер шагов урока
+    steps.js             рендер шагов урока (включая шаг-упражнение)
     algorithm.js         клинический алгоритм: дерево решений по шагам и картой
     timeline.js          анимированные SVG-таймлайны
     explorer.js          интерактивная карта (для EN — карта времён)
     storage.js           данные пользователя (сегодня localStorage, завтра API)
     theme.js keys.js nav.js rail.js
-    screens/             home · tests · results
+    screens/             home · tests · terms · results · level
   ui/                  — дизайн-система
     tokens.css           цвета/шрифты/ритм, светлая и тёмная темы
     base.css components.css player.css tests.css
@@ -49,6 +49,7 @@ langlab/
   content/             — курсы данными (это авторит Claude)
     en-ru/               index.js (манифест) · lessons.js · tests.js · course.css
     medicine/            USMLE: карты учебников + алгоритмы (свой README)
+    ielts/               IELTS Academic: приёмы чтения и письма (свой README)
   server/              — бэкенд: PocketBase (docker) + схема в pb_migrations/
   tools/               — оффлайн-инструменты: разбор PDF-учебников, проверка контента
   README.md ROADMAP.md
@@ -61,6 +62,12 @@ langlab/
 
 Как добавить курс: положить `content/<code>/` со своим манифестом (категории, уроки,
 тесты, палитра) и внести его в реестр `COURSES` в `app/main.js`. Движок и `ui/` не трогаются.
+
+Курс может включить себе разделы, которых у других нет, — движок смотрит на манифест,
+а не на список курсов: словарь появляется, если в уроках есть шаги `terms` (и называется
+так, как скажет `termsCopy`), опрос уровня — если не выключен `survey: false`,
+экран «Готовность» (`#/level`) — если курс отдал функцию `estimate(stats)`.
+Как превращать баллы в уровень, знает курс, а не платформа.
 Курс выбирается адресом (`?c=medicine`) и запоминается, а вошедшему открывается тот,
 по которому ему назначена активная программа в базе.
 

@@ -273,6 +273,57 @@
 .res-score.is-bad  { color: var(--danger-ink); }
 
 /* ============================================================
+   Готовность к экзамену (#/level)
+   Балл сам по себе не читается: «6.5» — это близко к цели или
+   далеко? Поэтому число всегда стоит на линейке, рядом с целевой
+   зоной, а разделы показаны полосами — видно, какой тянет вниз.
+   ============================================================ */
+.lv-scale { margin: var(--s-6) 0 var(--s-7); }
+.lv-track {
+  position: relative; height: 10px; border-radius: var(--r-pill);
+  background: var(--surface-sunken); border: 1px solid var(--border);
+}
+.lv-zone {
+  position: absolute; top: -1px; bottom: -1px;
+  background: color-mix(in oklab, var(--success) 26%, transparent);
+  border: 1px solid var(--success); border-radius: var(--r-pill);
+}
+.lv-mark { position: absolute; top: 50%; transform: translate(-50%, -50%); }
+.lv-mark i {
+  display: block; width: 16px; height: 16px; border-radius: 50%;
+  background: var(--accent); border: 3px solid var(--surface);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+.lv-mark b {
+  position: absolute; left: 50%; transform: translateX(-50%); top: 20px;
+  font-family: var(--font-mono); font-size: var(--fs-3); font-weight: 700;
+  color: var(--accent-ink); white-space: nowrap;
+}
+.lv-ticks {
+  position: relative; height: 18px; margin-top: var(--s-5);
+  font-family: var(--font-mono); font-size: var(--fs-1); color: var(--text-faint);
+}
+.lv-ticks span { position: absolute; transform: translateX(-50%); }
+.lv-zone-label {
+  text-align: center; font-size: var(--fs-2); color: var(--success-ink); margin-top: var(--s-2);
+}
+
+.lv-bars { display: grid; gap: var(--s-4); margin-bottom: var(--s-6); }
+.lv-bar-head { display: flex; align-items: baseline; gap: var(--s-3); margin-bottom: 6px; }
+.lv-bar-name { flex: 1; font-size: var(--fs-3); font-weight: 600; }
+.lv-bar-val { font-family: var(--font-mono); font-size: var(--fs-3); color: var(--text-dim); }
+.lv-bar-val.is-good { color: var(--success-ink); }
+.lv-bar-val.is-ok   { color: var(--warn-ink); }
+.lv-bar-val.is-bad  { color: var(--danger-ink); }
+.lv-bar-meta { font-size: var(--fs-2); color: var(--text-dim); margin-top: 6px; }
+
+.lv-block { margin-bottom: var(--s-6); }
+.lv-block .eyebrow { margin-bottom: var(--s-3); }
+.lv-block .dtable tr.is-here th,
+.lv-block .dtable tr.is-here td { background: var(--surface-active); font-weight: 600; }
+.lv-caveat { margin-top: var(--s-5); }
+
+/* ============================================================
    Пустое состояние — всегда с выходом, а не просто «пусто»
    ============================================================ */
 .empty {

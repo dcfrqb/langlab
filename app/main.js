@@ -10,8 +10,9 @@ import { sync } from '../engine/sync.js';
 import { store } from '../engine/storage.js';
 import { course as enRu } from '../content/en-ru/index.js';
 import { course as medicine } from '../content/medicine/index.js';
+import { course as ielts } from '../content/ielts/index.js';
 
-const COURSES = { 'en-ru': enRu, medicine };
+const COURSES = { 'en-ru': enRu, medicine, ielts };
 const DEFAULT = 'en-ru';
 
 /* Какой курс показывать. Пока это выбор в адресе (?c=medicine) и он

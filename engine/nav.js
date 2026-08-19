@@ -5,13 +5,16 @@ import { themeButtonHTML, bindThemeButton } from './theme.js';
 import { icon } from '../ui/icons.js';
 import { api } from './api.js';
 
-/* «Тесты» показываем только курсу, у которого они есть: у медицины
-   вместо них повторение алгоритмов, и пустая вкладка только сбивала бы. */
+/* Раздел показываем только курсу, у которого он есть: у медицины нет опроса
+   на уровень, у английского нет словаря терминов, и пустая вкладка сбивала бы.
+   Подпись словаря курс может переназвать: у медицины это «Термины»,
+   у IELTS — «Фразы»; список один, а называется он по-разному. */
 const LINKS = course => [
   { href: '#/',        label: 'Темы',       key: 'home' },
-  ...(course.terms?.length ? [{ href: '#/terms', label: 'Термины', key: 'terms' }] : []),
+  ...(course.terms?.length ? [{ href: '#/terms', label: course.termsCopy?.nav || 'Термины', key: 'terms' }] : []),
   ...(course.tests?.length ? [{ href: '#/tests', label: 'Тесты', key: 'tests' }] : []),
   { href: '#/results', label: 'Результаты', key: 'results' },
+  ...(course.estimate ? [{ href: '#/level', label: course.levelNav || 'Готовность', key: 'level' }] : []),
 ];
 
 function accountHTML(active) {

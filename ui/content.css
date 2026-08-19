@@ -94,6 +94,35 @@
 .rev.is-open .tip-line { max-height: 80px; opacity: 1; margin-top: var(--s-2); }
 
 /* ------------------------------------------------------------
+   Микро-упражнение: задание слева, разбор под ним
+   Карточка та же (.rev), но текст длиннее одной фразы — поэтому
+   выравнивание по левому краю, а не по центру: строку в две-три
+   строки по центру читать заметно тяжелее.
+   ------------------------------------------------------------ */
+.drill-task {
+  color: var(--text-soft); font-size: var(--fs-4);
+  max-width: 60ch; margin: 0 auto var(--s-4);
+}
+.rev.is-drill { text-align: left; padding-right: var(--s-6); }
+.rev.is-drill .drill-label {
+  font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: 0.05em;
+  color: var(--text-faint); text-transform: uppercase; margin-bottom: var(--s-2);
+}
+.rev.is-drill .drill-q { font-size: var(--fs-4); color: var(--text); }
+.rev.is-drill .drill-q b { color: var(--accent-ink); }
+.rev.is-drill .answer {
+  font-family: var(--font-sans); font-size: var(--fs-4); font-weight: 600;
+  line-height: 1.5;
+}
+/* Потолки раскрытия щедрые намеренно: на телефоне разбор в 300 символов
+   разворачивается в десяток строк, и подрезанный по max-height текст
+   выглядит не как анимация, а как баг. Лишний запас стоит только того,
+   что раскрытие доезжает чуть быстрее — это незаметно. */
+.rev.is-drill.is-open .answer { max-height: 600px; margin-top: var(--s-3); }
+.rev.is-drill.is-open .tip-line { max-height: 520px; }
+.rev.is-drill .tip-line { line-height: 1.5; }
+
+/* ------------------------------------------------------------
    Сравнение двух вариантов
    ------------------------------------------------------------ */
 .vs { display: grid; grid-template-columns: 1fr; gap: var(--s-3); }

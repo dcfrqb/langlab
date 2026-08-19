@@ -4,6 +4,7 @@
      concept · formula · tabs · examples · vs · markers
      mistake · scale · produce · note · quiz · algorithm
      table (сравнение в столбцах) · terms (термины темы)
+     drill (микро-упражнение: задание → разбор)
    ============================================================ */
 import { timeline } from './timeline.js';
 import { algorithmHTML, bindAlgorithm } from './algorithm.js';
@@ -153,6 +154,25 @@ function stepBody(step, ctx) {
         </div>
       </div>`;
 
+    /* Микро-упражнение. Полного экзаменационного задания здесь нет намеренно:
+       сорок вопросов за час тренируют выносливость, а приём ставится на одном
+       предложении — там видно, что именно ты сделал и почему это сработало.
+       Ответ спрятан до нажатия: подглядев его сразу, упражнение не делают. */
+    case 'drill': return `
+      <div class="fade-seq">
+        ${s.title ? `<div class="stitle">${s.title}</div>` : ''}
+        ${s.task ? `<p class="drill-task">${s.task}</p>` : ''}
+        <div class="ex-hint">нажми на карточку — покажу разбор</div>
+        <div class="ex-list">
+          ${s.items.map(it => `<div class="rev is-drill" tabindex="0" role="button">
+            ${it.label ? `<div class="drill-label">${it.label}</div>` : ''}
+            <div class="drill-q">${it.q}</div>
+            <div class="answer">${it.a}</div>
+            ${it.why ? `<div class="tip-line">${it.why}</div>` : ''}
+          </div>`).join('')}
+        </div>
+      </div>`;
+
     case 'quiz': return `
       <div class="fade-seq quiz">
         <div class="q-type">проверь себя</div>
@@ -179,7 +199,7 @@ export function bindStep(root, s) {
     }));
   }
 
-  if (s.type === 'examples' || s.type === 'produce') {
+  if (s.type === 'examples' || s.type === 'produce' || s.type === 'drill') {
     root.querySelectorAll('.rev').forEach(r => {
       const toggle = () => r.classList.toggle('is-open');
       r.addEventListener('click', toggle);

@@ -2,12 +2,13 @@
    ROUTER — hash-маршруты. Один курс на приложение (пока),
    поэтому в адресе только экран:
    #/ · #/lesson/:id · #/tests · #/test/:id · #/terms
-   #/results · #/survey · #/login · #/invite/:token
+   #/results · #/level · #/survey · #/login · #/invite/:token
    ============================================================ */
 import { renderHome } from './screens/home.js';
 import { renderTestsHome } from './screens/tests.js';
 import { renderTerms } from './screens/terms.js';
 import { renderResults } from './screens/results.js';
+import { renderLevel } from './screens/level.js';
 import { renderSurvey } from './screens/survey.js';
 import { renderLogin } from './screens/login.js';
 import { renderInvite } from './screens/invite.js';
@@ -36,8 +37,10 @@ export function startRouter(app, course) {
     }
 
     if (h === '#/tests')   return show('Тесты', () => renderTestsHome(app, course));
-    if (h === '#/terms')   return show('Термины', () => renderTerms(app, course));
+    if (h === '#/terms')   return show(course.termsCopy?.nav || 'Термины', () => renderTerms(app, course));
     if (h === '#/results') return show('Результаты', () => renderResults(app, course));
+    /* курс без своей оценки уровня (медицина, английский) сюда не ходит */
+    if (h === '#/level' && course.estimate) return show('Готовность', () => renderLevel(app, course));
     /* курс без опроса на уровень (медицина) на этот адрес просто не ходит */
     if (h === '#/survey' && course.survey !== false) return show('Опрос', () => renderSurvey(app, course));
     if (h === '#/login')   return show('Вход', () => renderLogin(app, course));

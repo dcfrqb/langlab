@@ -6,6 +6,11 @@
 
    Ищем и по английскому, и по русскому: человек одинаково часто
    вспоминает «как это по-английски» и «что это вообще значит».
+
+   Подписи экрана курс может переназвать через termsCopy: у медицины
+   это «Словарь курса» с терминами, у IELTS — «Фразы и шаблоны».
+   Механизм один, а называть его одинаково нельзя: «термин» и «фраза,
+   которую вставляешь в эссе» — разные вещи для того, кто учит.
    ============================================================ */
 import { navHTML, bindNav } from '../nav.js';
 import { setKeys } from '../keys.js';
@@ -32,16 +37,18 @@ function termHTML(t) {
 
 export function renderTerms(app, course) {
   const all = course.terms;
+  const copy = course.termsCopy || {};
 
   app.innerHTML = `
     ${navHTML(course, 'terms')}
     <header class="section wrap" style="padding-bottom:var(--s-4)">
-      <p class="eyebrow">термины · английский как на экзамене</p>
-      <h1>Словарь курса.</h1>
-      <p class="lede" style="margin-top:var(--s-4)">Все термины из пройденных тем — ${all.length} шт.
-        Ищи по-английски или по-русски: вспоминается и то, и другое.</p>
+      <p class="eyebrow">${copy.eyebrow || 'термины · английский как на экзамене'}</p>
+      <h1>${copy.title || 'Словарь курса.'}</h1>
+      <p class="lede" style="margin-top:var(--s-4)">${(copy.lede
+        || 'Все термины из пройденных тем — {n} шт. Ищи по-английски или по-русски: вспоминается и то, и другое.'
+        ).replace('{n}', all.length)}</p>
       <input class="input gloss-search" id="q" type="search" autocomplete="off"
-        placeholder="hyponatremia · гипонатриемия · ADH" aria-label="Поиск по словарю">
+        placeholder="${copy.placeholder || 'hyponatremia · гипонатриемия · ADH'}" aria-label="Поиск по словарю">
     </header>
     <section class="section wrap" id="list" style="padding-top:0"></section>`;
 
@@ -56,7 +63,7 @@ export function renderTerms(app, course) {
 
     if (!found.length) {
       list.innerHTML = `<p class="gloss-empty">Ничего не нашлось на «${query}».
-        Термины появляются вместе с темами — пройденных тем пока ${course.lessonCount}.</p>`;
+        ${copy.empty || 'Термины появляются вместе с темами'} — всего тем в курсе ${course.lessonCount}.</p>`;
       return;
     }
 
