@@ -15,6 +15,13 @@ export function renderPlayer(app, course, lesson) {
   let idx = 0;
   let dir = 'fwd';
 
+  /* Урок засчитываем не на последнем шаге, а по прочитанной доле: человек,
+     закрывший урок на предпоследнем шаге, прочёл его целиком — а в прогрессе
+     его не было вовсе. Четыре пятых — чтобы «пролистал два шага и ушёл»
+     не считалось пройденным. */
+  const DONE_AT = Math.max(1, Math.ceil(total * 0.8));
+  const seen = new Set();
+
   app.innerHTML = `
     <div class="player wrap" id="player" style="--accent:${accent}">
       <div class="player-top">
@@ -81,7 +88,8 @@ export function renderPlayer(app, course, lesson) {
       ? `Урок пройден ${icon('check')}`
       : `Дальше ${icon('chevron-right')}`;
     paintMeta();
-    if (idx === total - 1) store.markLessonDone(course.id, lesson.id);
+    seen.add(idx);
+    if (seen.size >= DONE_AT) store.markLessonDone(course.id, lesson.id);
   }
 
   function go(i) {

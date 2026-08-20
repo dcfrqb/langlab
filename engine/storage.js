@@ -7,7 +7,7 @@
 
 const KEY = 'langlab.v1';
 
-const EMPTY = () => ({ v: 1, prefs: {}, courses: {} });
+const EMPTY = () => ({ v: 1, prefs: {}, courses: {}, account: null });
 
 function read() {
   try {
@@ -79,13 +79,17 @@ export const store = {
     return isBest;
   },
 
-  /* --- профиль и программа: локальный кэш, чтобы работало и оффлайн --- */
+  /* --- профиль и программа: локальный кэш, чтобы работало и оффлайн ---
+     `from` помнит, откуда запись: 'server' — приехала при синхронизации,
+     'local' — собрал опрос здесь. Отправлять назад в базу можно только
+     своё: серверную копию нельзя, иначе кэш прошлого аккаунта уезжает
+     в следующий (так профиль IELTS попал в аккаунт Уилла 20.08). */
   profile(courseId) {
     return courseSlot(read(), courseId).profile || null;
   },
   setProfile(courseId, profile, { silent = false } = {}) {
     const state = read();
-    courseSlot(state, courseId).profile = profile;
+    courseSlot(state, courseId).profile = { ...profile, from: silent ? 'server' : 'local' };
     write(state);
     if (!silent) emit({ kind: 'profile', courseId, profile });
   },
@@ -95,7 +99,7 @@ export const store = {
   },
   setProgram(courseId, program, { silent = false } = {}) {
     const state = read();
-    courseSlot(state, courseId).program = program;
+    courseSlot(state, courseId).program = { ...program, from: silent ? 'server' : 'local' };
     write(state);
     if (!silent) emit({ kind: 'program', courseId, program });
   },
@@ -121,6 +125,24 @@ export const store = {
 
     if (changed) write(state);
     return changed;
+  },
+
+  /* --- чей это браузер ---
+     account — id аккаунта, с которым локальное состояние уже сведено.
+     null = человек занимался анонимно, состояние ничьё. Нужен, чтобы не
+     отправить в новый аккаунт кэш предыдущего: так медицинская программа
+     однажды уехала к Карине. */
+  account() { return read().account || null; },
+  setAccount(id) {
+    const state = read();
+    state.account = id || null;
+    write(state);
+  },
+  /* стереть нарешанное, оставив настройки: это состояние чужого аккаунта */
+  forgetCourses() {
+    const state = read();
+    state.courses = {};
+    write(state);
   },
 
   /* --- настройки (тема и т.п.) --- */

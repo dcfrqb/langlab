@@ -25,7 +25,9 @@ export function renderInvite(app, course, token) {
   (async () => {
     try {
       const user = await api.authWithInvite(token);
-      await sync.pushLocal(course.id);   // что нарешал до входа — в базу
+      /* нарешанное до входа уедет в аккаунт — но только если оно этого
+         человека, а не кэш предыдущего аккаунта в том же браузере */
+      const adopted = await sync.adopt(course.id, user.id);
       await sync.pull(course.id);        // что уже лежало в базе — сюда
 
       /* Курс берём из назначенной программы: приложение стартовало до входа,
@@ -36,7 +38,9 @@ export function renderInvite(app, course, token) {
       shell(`
         <p class="eyebrow">вход</p>
         <h1 class="h-sm">Готово, ${user.email.split('@')[0]}.</h1>
-        <p class="lede" style="margin-top:var(--s-4)">Прогресс теперь сохраняется в аккаунте.
+        <p class="lede" style="margin-top:var(--s-4)">${adopted
+          ? 'Прогресс теперь сохраняется в аккаунте.'
+          : 'В этом браузере лежало занятое под другим аккаунтом — я его убрал, чтобы оно не попало сюда.'}
           Ссылку можно открыть и на телефоне — попадёшь в тот же аккаунт.</p>
         <div class="auth-box"><button class="btn btn-primary" type="button" id="go">К темам</button></div>`);
       /* адрес с токеном в истории не оставляем */

@@ -44,9 +44,12 @@ async function sendOne(item) {
   if (item.kind === 'profile') {
     const p = item.profile;
     const existing = await api.list('profiles', { filter: api.mine(), perPage: 1 });
-    const data = { user, level: p.level, goal: p.goal, survey: p.survey };
-    if (existing.length) await api.update('profiles', existing[0].id, data);
-    else await api.create('profiles', data);
+    const fields = { level: p.level, goal: p.goal, survey: p.survey };
+    /* В правку `user` не кладём: правило коллекции требует, чтобы владельца
+       не переписывали (`@request.body.user:isset = false`), и на присланное
+       поле PocketBase отвечает 404 — профиль молча не сохранялся. */
+    if (existing.length) await api.update('profiles', existing[0].id, fields);
+    else await api.create('profiles', { user, ...fields });
     return;
   }
 
@@ -116,6 +119,7 @@ export const sync = {
   /* забрать своё из БД и влить в локальное состояние */
   async pull(courseId) {
     if (!api.isAuthed) return false;
+    store.setAccount(api.user.id);      // всё, что тут окажется, — этого аккаунта
     const [progress, results, profiles, programs] = await Promise.all([
       api.list('progress', { filter: api.mine(`course="${courseId}"`) }),
       api.list('test_results', { filter: api.mine(`course="${courseId}"`), sort: '-created' }),
@@ -148,6 +152,32 @@ export const sync = {
     return merged || !!profiles[0] || !!programs[0];
   },
 
+  /* Принять локальное состояние в аккаунт.
+
+     Состояние в браузере принадлежит либо этому человеку, либо никому:
+     если оно осталось от другого аккаунта (проверял чужую ссылку на своём
+     ноуте), это чужой кэш — отправлять его нельзя. Именно так медицинская
+     программа уехала в аккаунт Карины, а результаты по английскому — в
+     медицинский. Приоритет `hand` в activeCourse() прячет симптом,
+     причина — здесь.
+
+     Возвращает true, если нарешанное уехало в аккаунт, false — если
+     локальное состояние оказалось чужим и его стёрли. */
+  async adopt(courseId, userId) {
+    const previous = store.account();
+    const foreign = previous && previous !== userId;
+
+    if (foreign) {
+      store.forgetCourses();
+      writeQueue([]);                                // и очередь тоже чужая
+    }
+    store.setAccount(userId);
+
+    if (foreign) return false;
+    await sync.pushLocal(courseId);
+    return true;
+  },
+
   /* отправить в БД всё, что человек успел нарешать до входа */
   async pushLocal(courseId) {
     const lessons = store.lessons(courseId);
@@ -159,8 +189,11 @@ export const sync = {
     Object.keys(lessons).forEach(lessonId => q.push({ kind: 'lesson', courseId, lessonId }));
     Object.entries(scores).forEach(([testId, s]) =>
       q.push({ kind: 'score', courseId, testId, correct: s.correct, total: s.total }));
-    if (profile) q.push({ kind: 'profile', courseId, profile });
-    if (program) q.push({ kind: 'program', courseId, program });
+    /* Отправляем только заведомо своё: `from: 'local'` ставит опрос здесь.
+       Серверная копия назад не едет, а запись без метки осталась с прошлых
+       версий — чьё это, мы уже не знаем, и в аккаунт её не тащим. */
+    if (profile?.from === 'local') q.push({ kind: 'profile', courseId, profile });
+    if (program?.from === 'local') q.push({ kind: 'program', courseId, program });
 
     writeQueue(q);
     await sync.flush();
