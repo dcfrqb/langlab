@@ -127,6 +127,19 @@ export const store = {
     return changed;
   },
 
+  /* Забыть копию, приехавшую с сервера: там её больше нет — значит запись
+     либо отозвали, либо это кэш прошлой сессии в этом браузере. Собранное
+     опросом здесь (`from: 'local'`) не трогаем: оно ещё может не доехать
+     до базы. Возвращает true, если что-то убрали. */
+  forgetServerCopy(courseId, field) {
+    const state = read();
+    const slot = courseSlot(state, courseId);
+    if (!slot[field] || slot[field].from === 'local') return false;
+    delete slot[field];
+    write(state);
+    return true;
+  },
+
   /* --- чей это браузер ---
      account — id аккаунта, с которым локальное состояние уже сведено.
      null = человек занимался анонимно, состояние ничьё. Нужен, чтобы не

@@ -127,14 +127,23 @@ export const sync = {
       api.list('programs', { filter: api.mine(`course="${courseId}"`), sort: '-updated', perPage: 1 }),
     ]);
 
-    /* профиль и программа на сервере главнее: их мог поправить админ */
+    /* Профиль и программа на сервере главнее: их мог поправить админ.
+       А если на сервере их нет — нет и у нас: иначе в браузере остаётся
+       призрак чужого курса (программа IELTS в аккаунте, где её отозвали). */
+    let touched = false;
     if (profiles[0]) {
       const p = profiles[0];
       store.setProfile(courseId, { level: p.level, goal: p.goal, survey: p.survey }, { silent: true });
+      touched = true;
+    } else if (store.forgetServerCopy(courseId, 'profile')) {
+      touched = true;
     }
     if (programs[0]) {
       const p = programs[0];
       store.setProgram(courseId, { title: p.title, items: p.items || [], note: p.note }, { silent: true });
+      touched = true;
+    } else if (store.forgetServerCopy(courseId, 'program')) {
+      touched = true;
     }
 
     const best = new Map();
@@ -149,7 +158,7 @@ export const sync = {
         test: r.test, correct: r.correct, total: r.total, at: Date.parse(r.created) || Date.now(),
       })),
     });
-    return merged || !!profiles[0] || !!programs[0];
+    return merged || touched;
   },
 
   /* Принять локальное состояние в аккаунт.
