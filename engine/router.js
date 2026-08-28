@@ -1,10 +1,11 @@
 /* ============================================================
    ROUTER — hash-маршруты. Один курс на приложение (пока),
    поэтому в адресе только экран:
-   #/ · #/lesson/:id · #/tests · #/test/:id · #/terms
+   #/ · #/today · #/lesson/:id · #/tests · #/test/:id · #/terms
    #/results · #/level · #/survey · #/login · #/invite/:token
    ============================================================ */
 import { renderHome } from './screens/home.js';
+import { renderToday } from './screens/today.js';
 import { renderTestsHome } from './screens/tests.js';
 import { renderTerms } from './screens/terms.js';
 import { renderResults } from './screens/results.js';
@@ -34,6 +35,14 @@ export function startRouter(app, course) {
     if (testMatch) {
       const test = course.testById(testMatch[1]);
       if (test) return show(test.title, () => renderTest(app, course, test));
+    }
+
+    /* Доза дня. `#/today/more` — то же самое, но с добором будущих
+       повторов: человек закрыл сегодняшнее и хочет ещё. */
+    if (h === '#/today' || h === '#/today/more') {
+      if (course.questions?.length) {
+        return show('Сегодня', () => renderToday(app, course, { ahead: h.endsWith('/more') }));
+      }
     }
 
     if (h === '#/tests')   return show('Тесты', () => renderTestsHome(app, course));

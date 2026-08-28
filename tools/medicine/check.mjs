@@ -218,6 +218,25 @@ for (const test of course.tests || []) {
 }
 
 const nodeCount = algorithms.reduce((sum, a) => sum + (a.value.nodes?.length || 0), 0);
+
+/* --- ключи вопросов: два вопроса не должны делить одно расписание ---
+   Своего id у вопросов нет, ключ считается из текста и ответа
+   (engine/review.js). Совпали ключи — совпало и расписание повторений:
+   ответил на один, второй считается повторённым и больше не всплывёт. */
+{
+  const { qid } = await import(pathToFileURL(path.join(ROOT, 'engine/review.js')).href);
+  const byKey = new Map();
+  for (const q of course.questions || []) {
+    const key = qid(q);
+    const twin = byKey.get(key);
+    if (twin && JSON.stringify(twin) !== JSON.stringify(q)) {
+      fail('ключи вопросов', `совпал ключ у «${(q.q || q.ru || '').slice(0, 40)}…»`
+        + ` и «${(twin.q || twin.ru || '').slice(0, 40)}…» — у них будет одно расписание`);
+    }
+    byKey.set(key, q);
+  }
+}
+
 console.log(`книг: ${books.size} · алгоритмов: ${algorithms.length} · узлов: ${nodeCount}`);
 console.log(`уроков: ${lessons.length} · терминов: ${terms} · вопросов: ${(course.questions || []).length}`
   + ` · тестов: ${(course.tests || []).length}`);

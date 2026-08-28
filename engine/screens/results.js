@@ -4,8 +4,76 @@
 import { navHTML, bindNav } from '../nav.js';
 import { api } from '../api.js';
 import { store } from '../storage.js';
+import { review } from '../review.js';
+import { rhythmHTML } from '../rhythm.js';
+import { answerText } from '../quiz.js';
 import { setKeys } from '../keys.js';
 import { icon } from '../../ui/icons.js';
+
+/* ------------------------------------------------------------
+   ЖУРНАЛ ОШИБОК
+
+   Раньше он вёлся руками: «предлоги — 4 повтора» было посчитано
+   глазами по тетради устной практики и вписано в комментарий к
+   пачке вопросов. Теперь это просто сумма промахов по зоне —
+   считается из тех же записей, на которых стоят повторения.
+
+   Зона — метка вопроса (`tag`), а где меток нет — его группа (`g`).
+   Человеческое имя метке даёт курс (`zones` в манифесте).
+   ------------------------------------------------------------ */
+function journalHTML(course) {
+  if (!course.questions?.length) return '';
+  const j = review.journal(course);
+
+  if (!j.answered) {
+    return `
+      <div class="lv-block">
+        <p class="eyebrow">журнал ошибок</p>
+        <div class="empty" style="padding:var(--s-5) 0">
+          <div class="empty-note">Здесь появятся зоны, в которых ты промахиваешься,
+            и сами вопросы — по мере того как будешь отвечать. Ничего вписывать
+            руками не нужно: журнал считается сам.</div>
+          <a class="btn btn-primary" href="#/today">Доза дня ${icon('chevron-right')}</a>
+        </div>
+      </div>`;
+  }
+
+  const zones = j.zones.length ? `
+    <div class="lv-bars">
+      ${j.zones.map(z => {
+        const pct = Math.round(z.missed / z.seen * 100);
+        const tone = pct >= 40 ? 'is-bad' : pct >= 20 ? 'is-ok' : 'is-good';
+        return `
+          <div class="lv-bar">
+            <div class="lv-bar-head">
+              <span class="lv-bar-name">${z.zone}</span>
+              <span class="lv-bar-val ${tone}">${z.missed}/${z.seen} мимо</span>
+            </div>
+            <span class="bar"><i class="${tone}" style="width:${pct}%"></i></span>
+          </div>`;
+      }).join('')}
+    </div>` : '<p class="res-note">Промахов пока нет ни в одной зоне.</p>';
+
+  const worst = j.worst.length ? `
+    <p class="eyebrow" style="margin:var(--s-6) 0 10px">чаще всего мимо</p>
+    <div class="review">
+      ${j.worst.map(({ q, missed, seen }) => `
+        <div class="rev-item">
+          <div class="rev-q">${q.q || q.ru || (q.tokens || []).join(' ')}</div>
+          ${q.ru && q.q ? `<div class="rev-ru">${q.ru}</div>` : ''}
+          <div class="rev-a">мимо <b class="was">${missed}</b> из ${seen} ·
+            правильно: <b class="fix">${answerText(q)}</b></div>
+          ${q.why ? `<div class="rev-w">${q.why}</div>` : ''}
+        </div>`).join('')}
+    </div>` : '';
+
+  return `
+    <div class="lv-block">
+      <p class="eyebrow">журнал ошибок · ${j.answered} ответов</p>
+      ${zones}
+      ${worst}
+    </div>`;
+}
 
 export function renderResults(app, course) {
   const scores = store.scores(course.id);
@@ -75,7 +143,17 @@ export function renderResults(app, course) {
     </header>
     <section class="section wrap" style="padding-top:var(--s-4)">
       ${summary}
-      <div class="rows" style="margin-top:var(--s-5)">${rowsHTML}</div>
+      ${course.questions?.length ? `
+        <div class="lv-block">
+          <p class="eyebrow">ритм · последние две недели</p>
+          ${rhythmHTML(course.id)}
+          <p class="res-note">Считаются дни, а не серия подряд: пропуск убирает точку
+            и ничего не обнуляет. День засчитан с первого ответа —
+            порог низкий намеренно, чтобы его можно было взять в плохой день.</p>
+        </div>` : ''}
+      ${journalHTML(course)}
+      <p class="eyebrow" style="margin:var(--s-6) 0 10px">результаты по тестам</p>
+      <div class="rows">${rowsHTML}</div>
       <footer class="site">${course.brand.name}${course.brand.suffix} ·
         <a href="#/tests" style="color:var(--c-purple)">← ко всем тестам</a>
       </footer>

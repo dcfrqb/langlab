@@ -36,11 +36,22 @@ export function makeCourse(raw) {
     },
 
     testById(id) { return raw.tests.find(t => t.id === id) || null; },
-    poolFor(test) { return raw.questions.filter(test.filter); },
+    /* Обычный тест описывает свой пул фильтром по банку. Доза дня
+       (см. engine/review.js) приходит готовым списком: её состав считается
+       по расписанию повторений, а не по признаку вопроса, и фильтром
+       такое не выражается. */
+    poolFor(test) { return test.questions || raw.questions.filter(test.filter); },
     testSize(test) { return Math.min(test.pick, this.poolFor(test).length); },
 
     /* как назвать книгу-источник; курс без книг отдаёт id как есть */
     bookName(id) { return raw.books?.[id] || id; },
+
+    /* Как назвать зону в журнале ошибок. Зона — это метка вопроса
+       (`tag`), а метки писались для фильтров тестов, не для глаз:
+       «prep3» в отчёте о собственных ошибках читать невозможно.
+       Курс, у которого вопросы размечены группами (`g`), словарь
+       не заводит — там имена и так человеческие. */
+    zoneLabel(key) { return raw.zones?.[key] || key; },
 
     /* Из каких учебников собрана тема — по ссылкам на источник в её шагах.
        Нужно на витрине: план должен показывать, что за ним стоят книги,
@@ -54,8 +65,10 @@ export function makeCourse(raw) {
       return [...ids].map(id => this.bookName(id));
     },
 
-    /* цвет урока/теста — движок красит им весь экран через --accent */
-    accentFor(item) { return this.colorOf(item.aspect); },
+    /* цвет урока/теста — движок красит им весь экран через --accent.
+       Сборный прогон (доза дня) в аспекты курса не укладывается и называет
+       свой цвет ролью прямо — на то роли и заведены. */
+    accentFor(item) { return item.accent || this.colorOf(item.aspect); },
     inkFor(item) { return this.inkOf(item.aspect); },
   };
 }

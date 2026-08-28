@@ -522,3 +522,44 @@
   display: block; margin-top: 3px; font-style: normal;
   font-family: var(--font-mono); font-size: var(--fs-1); color: var(--text-faint);
 }
+
+/* ============================================================
+   Ритм и доза дня
+
+   Точки — плотность занятий за две недели, а не серия подряд.
+   Поэтому у пропущенного дня нет «сломанного» вида: он просто
+   бледный. Обнулившийся счётчик читался бы как приговор, а
+   вернуться после пропуска должно быть дешевле, чем не вернуться.
+   ============================================================ */
+.rhythm { margin-top: var(--s-4); }
+.rhythm-cap { font-size: var(--fs-2); color: var(--text-dim); margin-bottom: var(--s-2); }
+.rhythm-cap b { font-family: var(--font-mono); color: var(--text); font-size: var(--fs-3); }
+
+.rhythm-dots { display: flex; gap: var(--s-1); flex-wrap: wrap; }
+.rhythm-dots i {
+  width: 100%; max-width: 22px; aspect-ratio: 1; flex: 1 1 14px;
+  border-radius: var(--r-sm);
+  background: var(--surface-active);
+  border: 1px solid transparent;
+}
+.rhythm-dots i.is-on   { background: color-mix(in oklab, var(--success) 42%, transparent); }
+.rhythm-dots i.is-full { background: var(--success); }
+.rhythm-dots i.is-today { border-color: var(--text-dim); }
+
+/* Доза дня стоит в шапке выше витрины тестов: «что делать сейчас»
+   спрашивают каждый день, «что тут вообще есть» — один раз. */
+.today-block { margin-top: var(--s-5); }
+
+/* Доза дня красится ролью «сейчас». Заливка амбера яркая в обеих темах,
+   поэтому надпись на ней тёмная — белая на жёлтом не читается. */
+.today-cta { --on-accent: var(--on-now); }
+.today-mix { font-size: var(--fs-2); color: var(--text-dim); margin-top: 4px; }
+.today-actions { display: flex; gap: var(--s-3); flex-wrap: wrap; margin-top: var(--s-2); }
+
+/* итог дозы: про ритм, а не про счёт — счёт по семи вопросам шумный */
+.today-mark {
+  margin-top: var(--s-3); font-family: var(--font-mono);
+  font-size: var(--fs-2); color: var(--text-dim);
+}
+.today-mark b { color: var(--success-ink); font-size: var(--fs-3); }
+.today-mark + .rhythm { max-width: 320px; margin-inline: auto; }

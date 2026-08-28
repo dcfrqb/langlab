@@ -5,8 +5,51 @@ import { navHTML, bindNav } from '../nav.js';
 import { railHTML, bindRail } from '../rail.js';
 import { explorerHTML, bindExplorer } from '../explorer.js';
 import { store } from '../storage.js';
+import { review } from '../review.js';
+import { rhythmHTML } from '../rhythm.js';
 import { setKeys } from '../keys.js';
 import { icon } from '../../ui/icons.js';
+
+/* Блок «сегодня» стоит первым и до программы: программа отвечает на
+   вопрос «куда я иду», а он — на вопрос «что делать прямо сейчас».
+   Второй вопрос задаётся каждый день, первый — раз в месяц. */
+function todayHTML(course) {
+  if (!course.questions?.length) return '';
+
+  const size = course.dose || 8;
+  const s = review.summary(course, size);
+  const waiting = Math.min(size, s.due + s.fresh);
+
+  const body = waiting
+    ? `<div>
+         <div class="cta-k">доза дня</div>
+         <div class="cta-t">${waiting} ${waiting === 1 ? 'вопрос' : waiting < 5 ? 'вопроса' : 'вопросов'} на сегодня</div>
+         <div class="today-mix">${[
+           s.due ? `${Math.min(s.due, size)} ждёт повторения` : '',
+           s.fresh && s.due < size ? `${Math.min(s.fresh, size - s.due)} ещё не видел` : '',
+           /* Хвост называем вслух. После перерыва просроченных бывает две
+              сотни, а доза остаётся дневной: молча показывать «8 вопросов»
+              и не сказать про очередь — врать про масштаб. */
+           s.due > size ? `<b>+${s.due - size}</b> в очереди` : '',
+         ].filter(Boolean).join(' · ')}</div>
+       </div>
+       <span class="cta-go">${s.answeredToday ? 'ещё' : 'начать'} ${icon('chevron-right')}</span>`
+    : `<div>
+         <div class="cta-k">доза дня</div>
+         <div class="cta-t">На сегодня всё ✓</div>
+         <div class="today-mix">${s.answeredToday
+           ? `сегодня ответов: ${s.answeredToday}`
+           : 'повторять пока нечего'}${
+           s.nextInDays != null ? ` · следующая порция ${s.nextInDays <= 1 ? 'завтра' : `через ${s.nextInDays} дн.`}` : ''}</div>
+       </div>
+       <span class="cta-go">открыть ${icon('chevron-right')}</span>`;
+
+  return `
+    <div class="today-block">
+      <a class="cta today-cta" href="#/today" style="--accent:var(--now)">${body}</a>
+      ${rhythmHTML(course.id)}
+    </div>`;
+}
 
 /* блок «твоя программа»: то, ради чего всё затевалось —
    человек видит свой порядок, а не общий каталог */
@@ -107,6 +150,8 @@ export function renderHome(app, course) {
       <div class="tag-legend">
         ${course.categories.map(c => `<span><i style="background:${c.color}"></i> ${c.short}</span>`).join('')}
       </div>
+
+      ${todayHTML(course)}
 
       ${course.tests.length ? `
         <a class="cta" href="#/tests" style="--accent:${course.categories.at(-1).color};margin-top:var(--s-5)">

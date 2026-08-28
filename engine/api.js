@@ -89,12 +89,26 @@ export const api = {
   logout() { write(null); },
 
   /* --- записи --- */
-  async list(collection, { filter, sort, perPage = 200 } = {}) {
-    const q = new URLSearchParams({ perPage: String(perPage) });
+  async list(collection, { filter, sort, perPage = 200, page = 1 } = {}) {
+    const q = new URLSearchParams({ perPage: String(perPage), page: String(page) });
     if (filter) q.set('filter', filter);
     if (sort) q.set('sort', sort);
     const r = await request(`/collections/${collection}/records?${q}`);
     return r.items || [];
+  },
+
+  /* Всё разом, страницами. Расписание повторений — это запись на каждый
+     вопрос курса, то есть сотни строк: одной страницей оно не влезает,
+     а недобранный хвост выглядел бы как «этих вопросов ты не видел». */
+  async listAll(collection, opts = {}) {
+    const perPage = opts.perPage || 400;
+    const out = [];
+    for (let page = 1; page <= 25; page++) {
+      const chunk = await api.list(collection, { ...opts, perPage, page });
+      out.push(...chunk);
+      if (chunk.length < perPage) break;
+    }
+    return out;
   },
 
   create(collection, data) {

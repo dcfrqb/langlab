@@ -168,7 +168,15 @@
         <div class="ring is-ok"><div><div class="ring-num">5<span>/9</span></div><div class="ring-sub">56%</div></div></div>
         <div class="ring is-bad"><div><div class="ring-num">1<span>/8</span></div><div class="ring-sub">13%</div></div></div>
       </div>
-      <div class="sg-name">.rail · .track · .dots · .ring</div>
+      <div class="rhythm" style="margin-bottom:var(--s-4);max-width:340px">
+        <div class="rhythm-cap"><b>9</b> из 14 дней · сегодня 8</div>
+        <div class="rhythm-dots">
+          <i class="is-on"></i><i class="is-full"></i><i></i><i class="is-on"></i><i class="is-full"></i>
+          <i class="is-full"></i><i></i><i></i><i class="is-on"></i><i class="is-full"></i>
+          <i class="is-on"></i><i></i><i class="is-full"></i><i class="is-full is-today"></i>
+        </div>
+      </div>
+      <div class="sg-name">.rail · .track · .dots · .ring · .rhythm (плотность, не серия)</div>
     </div>
 
     <div class="sg-block">
@@ -194,7 +202,17 @@
         <div class="empty-note">У пустого экрана всегда есть выход — иначе это тупик.</div>
         <a class="btn btn-primary">Выбрать тест</a>
       </div>
-      <div class="sg-name">.card · .row · .callout · .empty</div>
+      <div class="today-block" style="margin-bottom:var(--s-4)">
+        <a class="cta today-cta" style="--accent:var(--now)">
+          <div>
+            <div class="cta-k">доза дня</div>
+            <div class="cta-t">8 вопросов на сегодня</div>
+            <div class="today-mix">5 ждёт повторения · 3 ещё не видел</div>
+          </div>
+          <span class="cta-go">начать ›</span>
+        </a>
+      </div>
+      <div class="sg-name">.card · .row · .callout · .empty · .today-cta (амбер, надпись тёмная)</div>
     </div>
 
     <div class="sg-block">
@@ -272,6 +290,7 @@
       ['ошибка', '--danger'],
       ['внимание', '--warn'],
       ['сейчас', '--now'],
+      ['текст на «сейчас»', '--on-now'],
       ['фокус', '--focus'],
     ].map(([n, v]) => swatch(n, v)).join('');
 

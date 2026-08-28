@@ -6,6 +6,7 @@
    ничего не теряется: очередь доживёт до следующего запуска.
    ============================================================ */
 import { store } from './storage.js';
+import { review } from './review.js';
 import { api } from './api.js';
 
 const QUEUE_KEY = 'langlab.queue.v1';
@@ -41,6 +42,30 @@ async function sendOne(item) {
     return;
   }
 
+  /* Расписание повторений: одна строка на вопрос, её правят, а не копят.
+     Журнал каждого нажатия рос бы тысячами строк в год, а ответить он
+     умеет ровно на то же, что и запись: когда показать снова и сколько
+     раз мимо. */
+  if (item.kind === 'review') {
+    const r = item.rec;
+    const fields = { box: r.b, due: r.d, seen: r.n, missed: r.m, last: r.at };
+    const existing = await api.list('reviews', {
+      filter: api.mine(`course="${item.courseId}" && question="${item.key}"`), perPage: 1,
+    });
+    if (existing.length) await api.update('reviews', existing[0].id, fields);
+    else await api.create('reviews', { user, course: item.courseId, question: item.key, ...fields });
+    return;
+  }
+
+  if (item.kind === 'day') {
+    const existing = await api.list('activity', {
+      filter: api.mine(`course="${item.courseId}" && day="${item.day}"`), perPage: 1,
+    });
+    if (existing.length) await api.update('activity', existing[0].id, { answered: item.answered });
+    else await api.create('activity', { user, course: item.courseId, day: item.day, answered: item.answered });
+    return;
+  }
+
   if (item.kind === 'profile') {
     const p = item.profile;
     const existing = await api.list('profiles', { filter: api.mine(), perPage: 1 });
@@ -68,10 +93,18 @@ async function sendOne(item) {
 }
 
 export const sync = {
-  /* положить изменение в очередь и попробовать отправить */
+  /* Положить изменение в очередь и попробовать отправить.
+
+     Повторения и дни правят одну и ту же строку по многу раз за сеанс:
+     восемь ответов подряд — это восемь правок счётчика дня, из которых
+     на сервере нужна последняя. Схлопываем их здесь, иначе очередь
+     оффлайн-сеанса растёт линейно по нажатиям, а отправляет то же самое. */
   enqueue(change) {
-    const q = readQueue();
-    q.push({ ...change, at: Date.now() });
+    const dedupe = change.kind === 'review' ? `review:${change.courseId}:${change.key}`
+      : change.kind === 'day' ? `day:${change.courseId}:${change.day}`
+      : null;
+    const q = dedupe ? readQueue().filter(i => i.dedupe !== dedupe) : readQueue();
+    q.push({ ...change, dedupe, at: Date.now() });
     writeQueue(q);
     sync.flush();
   },
@@ -120,11 +153,13 @@ export const sync = {
   async pull(courseId) {
     if (!api.isAuthed) return false;
     store.setAccount(api.user.id);      // всё, что тут окажется, — этого аккаунта
-    const [progress, results, profiles, programs] = await Promise.all([
+    const [progress, results, profiles, programs, reviews, activity] = await Promise.all([
       api.list('progress', { filter: api.mine(`course="${courseId}"`) }),
       api.list('test_results', { filter: api.mine(`course="${courseId}"`), sort: '-created' }),
       api.list('profiles', { filter: api.mine(), perPage: 1 }),
       api.list('programs', { filter: api.mine(`course="${courseId}"`), sort: '-updated', perPage: 1 }),
+      api.listAll('reviews', { filter: api.mine(`course="${courseId}"`) }),
+      api.listAll('activity', { filter: api.mine(`course="${courseId}"`) }),
     ]);
 
     /* Профиль и программа на сервере главнее: их мог поправить админ.
@@ -157,6 +192,8 @@ export const sync = {
       tests: [...best.values()].map(r => ({
         test: r.test, correct: r.correct, total: r.total, at: Date.parse(r.created) || Date.now(),
       })),
+      reviews: reviews.map(r => ({ key: r.question, b: r.box, d: r.due, n: r.seen, m: r.missed, at: r.last })),
+      days: activity.map(a => ({ day: a.day, answered: a.answered })),
     });
     return merged || touched;
   },
@@ -198,6 +235,12 @@ export const sync = {
     Object.keys(lessons).forEach(lessonId => q.push({ kind: 'lesson', courseId, lessonId }));
     Object.entries(scores).forEach(([testId, s]) =>
       q.push({ kind: 'score', courseId, testId, correct: s.correct, total: s.total }));
+
+    /* Расписание и ритм, накопленные до входа: человек мог заниматься
+       неделю анонимно, и терять эту неделю при входе нельзя. */
+    const { reviews, days } = review.pending(courseId);
+    reviews.forEach(({ key, ...rec }) => q.push({ kind: 'review', courseId, key, rec }));
+    days.forEach(({ day, answered }) => q.push({ kind: 'day', courseId, day, answered }));
     /* Отправляем только заведомо своё: `from: 'local'` ставит опрос здесь.
        Серверная копия назад не едет, а запись без метки осталась с прошлых
        версий — чьё это, мы уже не знаем, и в аккаунт её не тащим. */

@@ -3,6 +3,7 @@
    Типы: choose · gap · form · error · order · mgap · pick
    ============================================================ */
 import { store } from './storage.js';
+import { review } from './review.js';
 import { setKeys } from './keys.js';
 import { icon } from '../ui/icons.js';
 
@@ -50,27 +51,36 @@ export function givenText(q, given) {
 
 const promptText = q => q.q || q.ru || (q.tokens ? q.tokens.join(' ') : '');
 
+/* `test.ephemeral` — прогон, которого нет на витрине: доза дня. Рекорд по нему
+   не хранится (сравнивать нечего: состав каждый раз новый), а выход ведёт туда,
+   откуда пришли, а не в общий список тестов. */
 export function renderTest(app, course, test) {
   const pool = course.poolFor(test);
   const qs = shuffle(pool).slice(0, Math.min(test.pick, pool.length));
   const total = qs.length;
   const accent = course.accentFor(test);
-  const hadAttempt = !!store.bestScore(course.id, test.id);   // рекорд имеет смысл только со второго захода
+  /* Пара к акценту: на заливке амбера белая надпись не читается, а кнопка
+     «Проверить» — это заливка акцентом. Прогон, который красится не цветом
+     курса, называет свою пару сам (см. DESIGN.md, «фигура и текст»). */
+  const onAccent = test.onAccent ? `;--on-accent:${test.onAccent}` : '';
+  const exit = test.exit || '#/tests';
+  const hadAttempt = !test.ephemeral && !!store.bestScore(course.id, test.id);   // рекорд имеет смысл только со второго захода
   const results = [];
   let idx = 0;
   let staged = null;
   let checked = false;
 
   app.innerHTML = `
-    <div class="player wrap" style="--accent:${accent}">
+    <div class="player wrap" style="--accent:${accent}${onAccent}">
       <div class="player-top">
         <button class="btn btn-secondary btn-icon" id="back" type="button"
-          title="Все тесты" aria-label="Все тесты">${icon('chevron-left')}</button>
+          title="${test.exitLabel || 'Все тесты'}" aria-label="${test.exitLabel || 'Все тесты'}">${icon('chevron-left')}</button>
         <div class="track" id="track"></div>
       </div>
       <div class="deck-head">
-        <span class="pill">${test.mixed ? 'МИКС' : 'ТЕСТ'} <span class="num" id="qnum">· 1/${total}</span></span>
+        <span class="pill">${test.kind || (test.mixed ? 'МИКС' : 'ТЕСТ')} <span class="num" id="qnum">· 1/${total}</span></span>
         <h1>${test.title}</h1>
+        ${test.lede ? `<div class="lesson-sub">${test.lede}</div>` : ''}
       </div>
       <div class="stage" id="stage"></div>
       <div class="controls">
@@ -334,6 +344,10 @@ export function renderTest(app, course, test) {
     if (!checked) {
       const correct = isCorrect(q);
       results[idx] = { q, correct, given: staged };
+      /* Каждый ответ — сразу в расписание повторений, а не в конце теста:
+         брошенный на середине прогон тоже был работой, и то, что человек
+         в нём вспомнил (или не вспомнил), терять незачем. */
+      review.record(course, q, correct);
       checked = true;
       reveal(q, correct);
       setAct(idx === total - 1 ? 'Итог' : 'Дальше', true);
@@ -348,7 +362,7 @@ export function renderTest(app, course, test) {
 
   function finish() {
     const correct = results.filter(r => r.correct).length;
-    const isBest = store.saveScore(course.id, test.id, correct, total);
+    const isBest = test.ephemeral ? false : store.saveScore(course.id, test.id, correct, total);
     const pct = Math.round((correct / total) * 100);
     const wrong = results.filter(r => !r.correct);
 
@@ -357,7 +371,9 @@ export function renderTest(app, course, test) {
       : pct >= 50 ? { t: 'Нормально для тренировки — но есть что подтянуть.', c: 'is-ok' }
       : { t: 'Тему стоит перепройти и вернуться.', c: 'is-bad' };
 
-    const review = wrong.length ? `
+    /* не `review`: так называется модуль повторений, и локальная
+       переменная с тем же именем закрыла бы его в этой функции */
+    const reviewHTML = wrong.length ? `
       <div class="review">
         <div class="stitle" style="text-align:center">разбор промахов</div>
         ${wrong.map(({ q, given }) => {
@@ -379,25 +395,26 @@ export function renderTest(app, course, test) {
         </div>
       </div>
       <div class="score-verdict ${verdict.c}" style="margin-top:var(--s-3)">${verdict.t}</div>
-      ${isBest && hadAttempt ? '<div style="margin-top:6px"><span class="badge badge-new">новый рекорд</span></div>' : ''}`;
-    app.querySelector('.controls').innerHTML = `
+      ${test.finishNote?.({ correct, total })
+        || (isBest && hadAttempt ? '<div style="margin-top:6px"><span class="badge badge-new">новый рекорд</span></div>' : '')}`;
+    app.querySelector('.controls').innerHTML = test.finishActions || `
       <button class="btn btn-secondary" id="retry" type="button">Пройти заново</button>
       <a class="btn btn-primary" href="#/tests">К тестам ${icon('chevron-right')}</a>`;
     app.querySelector('.step-meta').innerHTML =
       `<span>${wrong.length ? `промахов: ${wrong.length} — разбор ниже` : 'без ошибок'}</span>`;
-    stage.innerHTML = review;
+    stage.innerHTML = reviewHTML;
     paintTrack();
 
-    app.querySelector('#retry').addEventListener('click', () => renderTest(app, course, test));
-    setKeys(e => { if (e.key === 'Escape') location.hash = '#/tests'; });
+    app.querySelector('#retry')?.addEventListener('click', () => renderTest(app, course, test));
+    setKeys(e => { if (e.key === 'Escape') location.hash = exit; });
     window.scrollTo(0, 0);
   }
 
   act.addEventListener('click', doAction);
-  app.querySelector('#back').addEventListener('click', () => { location.hash = '#/tests'; });
+  app.querySelector('#back').addEventListener('click', () => { location.hash = exit; });
   setKeys(e => {
     if (e.key === 'Enter') doAction();
-    else if (e.key === 'Escape') location.hash = '#/tests';
+    else if (e.key === 'Escape') location.hash = exit;
   });
 
   drawQuestion();

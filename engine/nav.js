@@ -11,6 +11,7 @@ import { api } from './api.js';
    у IELTS — «Фразы»; список один, а называется он по-разному. */
 const LINKS = course => [
   { href: '#/',        label: 'Темы',       key: 'home' },
+  ...(course.questions?.length ? [{ href: '#/today', label: 'Сегодня', key: 'today' }] : []),
   ...(course.terms?.length ? [{ href: '#/terms', label: course.termsCopy?.nav || 'Термины', key: 'terms' }] : []),
   ...(course.tests?.length ? [{ href: '#/tests', label: 'Тесты', key: 'tests' }] : []),
   { href: '#/results', label: 'Результаты', key: 'results' },

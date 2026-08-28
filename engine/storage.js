@@ -28,7 +28,16 @@ function courseSlot(state, courseId) {
   const slot = state.courses[courseId];
   slot.lessons ||= {};
   slot.tests ||= {};
+  slot.reviews ||= {};      // расписание повторений: ключ вопроса → ступень и дата
+  slot.days ||= {};         // ритм: день → сколько ответов в нём было
   return slot;
+}
+
+/* дни старше полугода не хранит никто: ни один экран так далеко не смотрит */
+function prune(days, keep = 190) {
+  const keys = Object.keys(days);
+  if (keys.length <= keep) return;
+  keys.sort().slice(0, keys.length - keep).forEach(k => delete days[k]);
 }
 
 /* подписчики на изменения — на них живёт отправка в БД (sync.js) */
@@ -79,6 +88,37 @@ export const store = {
     return isBest;
   },
 
+  /* --- расписание повторений (см. engine/review.js) ---
+     Одна запись на вопрос, а не на ответ: журнал каждого нажатия рос бы
+     тысячами строк в год, а нужно из него ровно две вещи — когда показать
+     снова и сколько раз мимо. И то и другое помещается в саму запись. */
+  reviews(courseId) {
+    return courseSlot(read(), courseId).reviews;
+  },
+  saveReview(courseId, key, rec) {
+    const state = read();
+    courseSlot(state, courseId).reviews[key] = rec;
+    write(state);
+    emit({ kind: 'review', courseId, key, rec });
+  },
+
+  /* --- ритм: сколько ответов в каждом дне ---
+     Храним счётчик по дню, а не отметку «занимался»: разница между
+     одним вопросом и сорока видна только так, а порогом дня остаётся
+     один ответ. Дни старше полугода выкидываем — ритм за них никто
+     не спрашивает, а место в localStorage не бесконечное. */
+  days(courseId) {
+    return courseSlot(read(), courseId).days;
+  },
+  countDay(courseId, day) {
+    const state = read();
+    const slot = courseSlot(state, courseId);
+    slot.days[day] = (slot.days[day] || 0) + 1;
+    prune(slot.days);
+    write(state);
+    emit({ kind: 'day', courseId, day, answered: slot.days[day] });
+  },
+
   /* --- профиль и программа: локальный кэш, чтобы работало и оффлайн ---
      `from` помнит, откуда запись: 'server' — приехала при синхронизации,
      'local' — собрал опрос здесь. Отправлять назад в базу можно только
@@ -104,11 +144,27 @@ export const store = {
     if (!silent) emit({ kind: 'program', courseId, program });
   },
 
-  /* влить состояние с сервера: уроки объединяем, по тестам берём лучшее */
-  mergeRemote(courseId, { lessons = [], tests = [] }) {
+  /* влить состояние с сервера: уроки объединяем, по тестам берём лучшее,
+     по повторениям — ту запись, которую видели позже (на другом устройстве
+     мог быть более свежий ответ), по дням — большее число ответов */
+  mergeRemote(courseId, { lessons = [], tests = [], reviews = [], days = [] }) {
     const state = read();
     const slot = courseSlot(state, courseId);
     let changed = false;
+
+    reviews.forEach(r => {
+      const prev = slot.reviews[r.key];
+      if (prev && (prev.at || '') >= (r.at || '')) return;
+      slot.reviews[r.key] = { b: r.b, d: r.d, n: r.n, m: r.m, at: r.at };
+      changed = true;
+    });
+
+    days.forEach(({ day, answered }) => {
+      if ((slot.days[day] || 0) >= answered) return;
+      slot.days[day] = answered;
+      changed = true;
+    });
+    if (days.length) prune(slot.days);
 
     lessons.forEach(({ lesson, at }) => {
       if (slot.lessons[lesson]) return;
