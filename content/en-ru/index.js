@@ -5,6 +5,7 @@
    ============================================================ */
 import { GROUPS, LESSONS } from './lessons.js';
 import { QUESTIONS, TESTS } from './tests.js';
+import { estimate } from './level.js';
 
 /* Категории курса = «цветовой словарь». Ключ живёт в контенте (поле aspect),
    движок берёт отсюда только цвет и подпись. Для другого языка — свой набор. */
@@ -30,19 +31,19 @@ const EXPLORER = {
       { k:'simple',     tag:'simple',             form:'I <span class="k-simple">do</span>',                 hint:'привычка, регулярно',  lesson:'present-simple' },
       { k:'continuous', tag:'continuous',         form:'I\'m <span class="k-continuous">doing</span>',       hint:'прямо сейчас',         lesson:'present-continuous' },
       { k:'perfect',    tag:'perfect',            form:'I have <span class="k-perfect">done</span>',         hint:'результат сейчас',     lesson:'present-perfect' },
-      { k:'perfcont',   tag:'perfect continuous', form:'I have <span class="k-perfcont">been doing</span>',  hint:'делаю уже сколько-то', lesson:null },
+      { k:'perfcont',   tag:'perfect continuous', form:'I have <span class="k-perfcont">been doing</span>',  hint:'делаю уже сколько-то', lesson:'perfect-continuous' },
     ]},
     { key: 'past', label: 'past', tint: 'var(--c-orange)', rows: [
       { k:'simple',     tag:'simple',             form:'I <span class="k-simple">did</span>',                hint:'факт в прошлом',       lesson:'past-simple' },
       { k:'continuous', tag:'continuous',         form:'I was <span class="k-continuous">doing</span>',      hint:'делал в тот момент',   lesson:'past-continuous' },
       { k:'perfect',    tag:'perfect',            form:'I had <span class="k-perfect">done</span>',          hint:'до другого момента',   lesson:'past-perfect' },
-      { k:'perfcont',   tag:'perfect continuous', form:'I had <span class="k-perfcont">been doing</span>',   hint:'тянулось до момента',  lesson:null },
+      { k:'perfcont',   tag:'perfect continuous', form:'I had <span class="k-perfcont">been doing</span>',   hint:'тянулось до момента',  lesson:'perfect-continuous' },
     ]},
     { key: 'future', label: 'future', tint: 'var(--c-purple)', rows: [
       { k:'simple',     tag:'simple',             form:'I will <span class="k-simple">do</span>',                  hint:'решение, факт',      lesson:'future-will-going' },
       { k:'continuous', tag:'continuous',         form:'I will be <span class="k-continuous">doing</span>',        hint:'буду делать тогда',  lesson:'future-perfect-cont' },
       { k:'perfect',    tag:'perfect',            form:'I will have <span class="k-perfect">done</span>',          hint:'сделаю к моменту',   lesson:'future-perfect-cont' },
-      { k:'perfcont',   tag:'perfect continuous', form:'I will have <span class="k-perfcont">been doing</span>',   hint:'буду делать уже сколько-то', lesson:null },
+      { k:'perfcont',   tag:'perfect continuous', form:'I will have <span class="k-perfcont">been doing</span>',   hint:'буду делать уже сколько-то', lesson:'perfect-continuous' },
     ]},
   ],
   /* «почерк» аспекта на таймлайне: форма + где её центр */
@@ -70,6 +71,14 @@ export const course = {
   questions: QUESTIONS,
   tests: TESTS,
   explorer: EXPLORER,
+  estimate,
+  levelNav: 'Готовность',
+  homeLede: 'Программа собрана под твои слабые места, а не по порядку учебника. ' +
+    'Листай карточки, проверяй себя тестами, следи за уровнем на «Готовности». Пройдено тем: ',
+  testsLede: 'Разделы идут маршрутом: <b>Замер</b> — понять, где сыпется; <b>Ремонт</b> — ' +
+    'зоны из журнала ошибок; <b>Мост к IELTS</b> — язык письма и графиков; дальше общая ' +
+    'теория B1+ и миксы. Состав каждого теста собирается заново при заходе — кроме «Замера», ' +
+    'у него он фиксированный, чтобы два прохода можно было честно сравнить.',
   /* курс тащит свою палитру классов (k-simple, row-perfect и т.п.) */
   stylesheet: 'content/en-ru/course.css',
 };

@@ -51,11 +51,21 @@ export function renderResults(app, course) {
     const cls = !s ? '' : p >= 90 ? 'is-good' : p >= 60 ? 'is-ok' : 'is-bad';
     return `
       <a class="row" href="#/test/${t.id}" style="--accent:${course.accentFor(t)}">
-        <span class="res-name">${t.title}${t.batch === 2 ? ' <span class="badge badge-soft">пачка 2</span>' : ''}</span>
+        <span class="res-name">${t.title}${t.lvl ? ` <span class="badge badge-soft">${t.lvl}</span>` : ''}</span>
         <span class="bar"><i class="${cls}" style="width:${s ? p : 0}%"></i></span>
         <span class="res-score ${cls}">${s ? `${s.correct}/${s.total}` : '—'}</span>
       </a>`;
   };
+
+  /* те же разделы, что на витрине тестов: список из тридцати строк
+     без заголовков перестаёт читаться как карта прогресса */
+  let lastSect = null;
+  const rowsHTML = course.tests.map(t => {
+    const head = t.sect && t.sect !== lastSect
+      ? `<div class="eyebrow" style="margin:var(--s-5) 0 10px">${t.sect}</div>` : '';
+    lastSect = t.sect || lastSect;
+    return head + row(t);
+  }).join('');
 
   app.innerHTML = `
     ${navHTML(course, 'results')}
@@ -65,7 +75,7 @@ export function renderResults(app, course) {
     </header>
     <section class="section wrap" style="padding-top:var(--s-4)">
       ${summary}
-      <div class="rows" style="margin-top:var(--s-5)">${course.tests.map(row).join('')}</div>
+      <div class="rows" style="margin-top:var(--s-5)">${rowsHTML}</div>
       <footer class="site">${course.brand.name}${course.brand.suffix} ·
         <a href="#/tests" style="color:var(--c-purple)">← ко всем тестам</a>
       </footer>

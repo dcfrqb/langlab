@@ -1,16 +1,30 @@
 /* ============================================================
    TESTS — банк вопросов + сборка тестов.
-   Типы вопросов (для разнообразия):
-     choose — выбор варианта
-     gap    — вписать слово (ввод с клавиатуры)
-     form   — поставить слово из скобок в нужную форму (ввод)
-     error  — найти ошибочное слово в предложении (клик по слову)
-     order  — собрать предложение из перемешанных кусочков
-   Поля: g — группа, type, q, options/answer/…, ru — перевод/подсказка,
-         why — разбор, mine:true — построено на ТВОЕЙ реальной ошибке.
-   ============================================================ */
 
-export const QUESTIONS = [
+   Банк собран из четырёх пачек, каждая в своём файле:
+     здесь              пачки 1–2 · A1/A2 · база и первое закрепление
+     questions-b1.js    пачка 3   · B1/B2 · конструкции и лексика
+     questions-fix.js   пачка 4   · РЕМОНТ — под журнал ошибок Will'а
+     questions-ielts.js пачка 4   · МОСТ К IELTS — письмо и академическая лексика
+     questions-diag.js  ЗАМЕР     · 24 вопроса фиксированного состава
+
+   Типы вопросов:
+     choose — выбор варианта      order — собрать предложение
+     gap    — вписать слово       mgap  — два пропуска в предложении
+     form   — поставить форму     pick  — отметить все верные
+     error  — найти ошибочное слово
+
+   Поля: g — группа, type, q, options/answer/…, ru — перевод/подсказка,
+         why — разбор, mine:true — построено на реальной ошибке,
+         lex:true — лексический, diag:true — только для замера,
+         r2/r3/r4 — номер пачки, tag:[...] — из какого теста брать.
+   ============================================================ */
+import { B1_QUESTIONS } from './questions-b1.js';
+import { FIX_QUESTIONS } from './questions-fix.js';
+import { IELTS_QUESTIONS } from './questions-ielts.js';
+import { DIAG_QUESTIONS } from './questions-diag.js';
+
+const BASE_QUESTIONS = [
 
 /* ============ БАЗА ============ */
 { g:'База', type:'choose', q:'___ you tired?', options:['Am','Is','Are'], answer:2,
@@ -283,37 +297,104 @@ export const QUESTIONS = [
   ru:'', why:'already / yet / just → Perfect. yesterday / ago → Past Simple.' },
 ];
 
-/* ------------------------------------------------------------
-   ТЕСТЫ. pick — сколько вопросов взять; filter — из какого пула.
-   ------------------------------------------------------------ */
-export const TESTS = [
-  { id:'baza',    title:'Рубеж 1 · База',        sub:'to be · порядок слов · мн.число · have got',
-    aspect:'simple',     filter:q=>q.g==='База',       pick:8 },
-  { id:'present', title:'Рубеж 2 · Present',      sub:'Simple · Continuous · Perfect',
-    aspect:'continuous', filter:q=>q.g==='Present',    pick:8 },
-  { id:'past',    title:'Рубеж 3 · Past',         sub:'Simple · Continuous · Perfect',
-    aspect:'perfect',    filter:q=>q.g==='Past',       pick:7 },
-  { id:'future',  title:'Рубеж 4 · Future',       sub:'will · going to · Perfect',
-    aspect:'perfcont',   filter:q=>q.g==='Future',     pick:6 },
-  { id:'struct',  title:'Рубеж 5 · Структура',    sub:'вопросы · модальные · артикли · предлоги',
-    aspect:'perfect',    filter:q=>q.g==='Структура',  pick:9 },
-  { id:'words',   title:'Рубеж 6 · Слова',        sub:'маркеры времени → нужное время',
-    aspect:'simple',     filter:q=>q.g==='Слова',      pick:6 },
-  { id:'mix',     title:'Микс · Итоговый',        sub:'все темы вперемешку — проверка на прочность',
-    aspect:'perfcont',   filter:()=>true,              pick:14, mixed:true },
-  { id:'mine',    title:'Твои ошибки',            sub:'собрано из твоих реальных промахов — не наступи снова',
-    aspect:'continuous', filter:q=>q.mine,             pick:10, mixed:true },
-
-  /* ---- Пачка 2 · закрепление ---- */
-  { id:'prep',    title:'Предлоги · марафон',      sub:'горячая зона №1 — in/on/at + устойчивые пары',
-    aspect:'perfect',    filter:q=>q.tag&&q.tag.includes('prep'),  pick:10, mixed:true, batch:2 },
-  { id:'perfect', title:'Present Perfect · фокус', sub:'have/has + V3 · did≠been · already/yet/since',
-    aspect:'perfect',    filter:q=>q.tag&&q.tag.includes('perfect'),pick:8, mixed:true, batch:2 },
-  { id:'ing',     title:'Лишний -ing · капкан',    sub:'глаголы состояния и привычки без -ing',
-    aspect:'continuous', filter:q=>q.tag&&q.tag.includes('ing'),    pick:6, mixed:true, batch:2 },
-  { id:'mix2',    title:'Микс 2 · продвинутый',    sub:'новая пачка, все темы, посложнее',
-    aspect:'perfcont',   filter:q=>q.r2,                            pick:14, mixed:true, batch:2 },
-  { id:'boss',    title:'Финал · босс',            sub:'18 вопросов со всего курса — проверка на прочность',
-    aspect:'perfcont',   filter:()=>true,                           pick:18, mixed:true, batch:2 },
+/* Один банк на все экраны. Порядок пачек — исторический: так в разборе
+   ошибок видно, из какого слоя курса прилетел вопрос. */
+export const QUESTIONS = [
+  ...BASE_QUESTIONS,
+  ...B1_QUESTIONS,
+  ...FIX_QUESTIONS,
+  ...IELTS_QUESTIONS,
+  ...DIAG_QUESTIONS,
 ];
 
+/* ------------------------------------------------------------
+   ФИЛЬТРЫ. Вопросы замера (diag) не должны просачиваться в
+   обычные тесты: замер тем и ценен, что его состав фиксирован
+   и не встречался нигде ещё. Поэтому исключаем их везде, кроме
+   самого теста «Замер».
+   ------------------------------------------------------------ */
+const live = q => !q.diag;
+const tag = (...names) => q => live(q) && q.tag && names.some(n => q.tag.includes(n));
+const pack = n => q => live(q) && q[`r${n}`];
+
+/* ------------------------------------------------------------
+   ТЕСТЫ. pick — сколько вопросов взять; filter — из какого пула.
+   sect — раздел на витрине, lvl — уровень (подсказка, куда лезть).
+
+   Порядок разделов — это и есть маршрут: сначала замерить, потом
+   чинить пробоины, потом строить мост к экзамену, и только потом
+   общая теория и миксы. Раньше витрина была плоским списком из
+   13 карточек, и «что делать сейчас» из неё не читалось.
+   ------------------------------------------------------------ */
+export const TESTS = [
+
+  /* ---- ЗАМЕР ---- */
+  { id:'diag',   title:'Замер · где ты сейчас',   sub:'24 вопроса фиксированного состава — по 2–3 на каждую зону курса',
+    sect:'Замер', lvl:'A2–B2', aspect:'perfcont', filter:q=>q.diag,          pick:24, mixed:true },
+
+  /* ---- РЕМОНТ: то, что доказанно просело ---- */
+  { id:'fix-past', title:'Past · нарратив',       sub:'Simple ↔ Continuous ↔ Perfect в одном рассказе · used to · would',
+    sect:'Ремонт', lvl:'B1',    aspect:'perfect',    filter:tag('narr2','narr'),          pick:12, mixed:true },
+  { id:'fix-prep', title:'Предлоги · пары',       sub:'горячая зона №1: depend on · rise in · been to · result of',
+    sect:'Ремонт', lvl:'B1–B2', aspect:'perfcont',   filter:tag('prep3','prep2','prep'),  pick:14, mixed:true },
+  { id:'fix-perf', title:'Perfect ↔ Past',        sub:'been/gone · have done ↔ have been doing · did + been вместе нельзя',
+    sect:'Ремонт', lvl:'B1',    aspect:'perfect',    filter:tag('perf3','perf2','perfect'), pick:12, mixed:true },
+  { id:'fix-ing',  title:'Лишний -ing · капкан',  sub:'состояния без -ing и глаголы, которые меняют смысл',
+    sect:'Ремонт', lvl:'B1',    aspect:'continuous', filter:tag('ing2','ing'),            pick:10, mixed:true },
+  { id:'fix-quant',title:'Артикли и кванторы',    sub:'неисчисляемые · little/a little · much/many · a/the/—',
+    sect:'Ремонт', lvl:'B1',    aspect:'simple',     filter:tag('quant2','quant'),        pick:12, mixed:true },
+  { id:'mine3',    title:'Твои ошибки 3.0',       sub:'всё, на чём ты реально спотыкался — старое и новое вперемешку',
+    sect:'Ремонт', lvl:'A2–B2', aspect:'continuous', filter:q=>live(q)&&q.mine,           pick:14, mixed:true },
+
+  /* ---- МОСТ К IELTS ---- */
+  { id:'w-gram',  title:'Грамматика для письма',  sub:'условные · инверсия · пассив · косвенная · сокращённые придаточные',
+    sect:'Мост к IELTS', lvl:'B2', aspect:'perfect',    filter:tag('wgram'),  pick:12, mixed:true },
+  { id:'w-lex',   title:'Академическая лексика',  sub:'significant · sufficient · conduct research · affect ≠ effect',
+    sect:'Мост к IELTS', lvl:'B2', aspect:'perfcont',   filter:tag('wlex'),   pick:12, mixed:true },
+  { id:'w-task1', title:'Task 1 · язык графиков', sub:'rose by · peaked at · accounted for · number ≠ amount',
+    sect:'Мост к IELTS', lvl:'B2', aspect:'simple',     filter:tag('task1','ielts'), pick:12, mixed:true },
+  { id:'w-task2', title:'Task 2 · язык аргумента',sub:'позиция · hedging · примеры · вывод без «I think»',
+    sect:'Мост к IELTS', lvl:'B2', aspect:'continuous', filter:tag('task2'),  pick:10, mixed:true },
+  { id:'w-reg',   title:'Регистр и связность',    sub:'however ≠ but · whereas · отсылки вместо повторов',
+    sect:'Мост к IELTS', lvl:'B2', aspect:'perfect',    filter:tag('reg2','formal','link'), pick:12, mixed:true },
+
+  /* ---- ГРАММАТИКА B1+ (пачка 3) ---- */
+  { id:'cond',    title:'Условные · if-машина',   sub:'0 / 1 / 2 / 3 тип · unless · I wish',
+    sect:'Грамматика B1+', lvl:'B1', aspect:'perfect',    filter:tag('cond'),     pick:10, mixed:true },
+  { id:'ger',     title:'-ing или to + глагол',   sub:'enjoy doing ↔ decide to do · stop doing ≠ stop to do',
+    sect:'Грамматика B1+', lvl:'B1', aspect:'continuous', filter:tag('ger'),      pick:11, mixed:true },
+  { id:'passive', title:'Пассивный залог',        sub:'be + V3 во всех временах · by · must be done',
+    sect:'Грамматика B1+', lvl:'B1', aspect:'simple',     filter:tag('passive'),  pick:8, mixed:true },
+  { id:'reported',title:'Косвенная речь',         sub:'said/told · сдвиг времён · косвенный вопрос',
+    sect:'Грамматика B1+', lvl:'B1', aspect:'perfect',    filter:tag('reported'), pick:8, mixed:true },
+  { id:'modal',   title:'Модальные: догадки',     sub:'must be · can’t have · should have · mustn’t ≠ don’t have to',
+    sect:'Грамматика B1+', lvl:'B2', aspect:'perfcont',   filter:tag('modal'),    pick:8, mixed:true },
+  { id:'struct2', title:'Вопросы и сравнения',    sub:'непрямой вопрос · so/such · as…as · enough/too',
+    sect:'Грамматика B1+', lvl:'B1', aspect:'continuous', filter:tag('struct2'),  pick:8, mixed:true },
+  { id:'rel',     title:'Придаточные who/which',  sub:'who · which · that · whose · запятая меняет правила',
+    sect:'Грамматика B1+', lvl:'B1', aspect:'perfect',    filter:tag('rel'),      pick:9,  mixed:true },
+
+  /* ---- ЛЕКСИКА B1+ (пачка 3) ---- */
+  { id:'coll',    title:'Коллокации',             sub:'make / do / take / have / pay — что с чем живёт',
+    sect:'Лексика B1+', lvl:'B1', aspect:'simple',     filter:tag('coll'),    pick:10, mixed:true },
+  { id:'phrasal', title:'Фразовые глаголы',       sub:'put off · look into · come up with · carry out',
+    sect:'Лексика B1+', lvl:'B1', aspect:'continuous', filter:tag('phrasal'), pick:10, mixed:true },
+  { id:'wform',   title:'Словообразование',       sub:'analyse → analysis · -ing ≠ -ed · economic ≠ economical',
+    sect:'Лексика B1+', lvl:'B2', aspect:'perfect',    filter:tag('wform'),   pick:10, mixed:true },
+  { id:'confuse', title:'Похожие слова',          sub:'affect/effect · lend/borrow · say/tell · raise/rise',
+    sect:'Лексика B1+', lvl:'B1', aspect:'continuous', filter:tag('confuse'), pick:10, mixed:true },
+  { id:'awl',     title:'AWL · ядро для эссе',    sub:'significant · evidence · approach · sufficient',
+    sect:'Лексика B1+', lvl:'B2', aspect:'perfcont',   filter:tag('awl'),     pick:12, mixed:true },
+
+  /* ---- МИКСЫ И ФИНАЛ ---- */
+  { id:'base',    title:'База · контроль',        sub:'12 вопросов уровня A1/A2 — проверка, что фундамент не поехал',
+    sect:'Миксы и финал', lvl:'A1–A2', aspect:'simple',  filter:q=>live(q)&&!q.r3&&!q.r4, pick:12, mixed:true },
+  { id:'mix4',    title:'Микс · пачка 4',         sub:'весь новый материал вперемешку: ремонт + мост к IELTS',
+    sect:'Миксы и финал', lvl:'B1–B2', aspect:'continuous', filter:pack(4),   pick:20, mixed:true },
+  { id:'lexmix',  title:'Лексика · большой микс', sub:'вся лексика сразу: слова, пары, регистр, графики',
+    sect:'Миксы и финал', lvl:'B1–B2', aspect:'perfcont',   filter:q=>live(q)&&q.lex, pick:20, mixed:true },
+  { id:'mixb1',   title:'Микс B1+ · без разминки',sub:'только материал уровня B1/B2, ни одного простого вопроса',
+    sect:'Миксы и финал', lvl:'B1–B2', aspect:'perfect',    filter:q=>live(q)&&(q.r3||q.r4), pick:20, mixed:true },
+  { id:'final',   title:'Финал · экзамен',        sub:'35 вопросов, грамматика и лексика, всё сложное сразу',
+    sect:'Миксы и финал', lvl:'B2',    aspect:'perfcont',   filter:q=>live(q)&&(q.r2||q.r3||q.r4), pick:35, mixed:true },
+];
