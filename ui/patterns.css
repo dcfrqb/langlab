@@ -195,6 +195,24 @@
 .order-line .ph { color: var(--text-faint); font-family: var(--font-mono); font-size: var(--fs-2); }
 .order-bank { display: flex; flex-wrap: wrap; gap: var(--s-2); justify-content: center; max-width: 640px; margin: 0 auto; }
 
+/* Слово тащат пальцем, поэтому браузеру запрещено толковать тот же жест
+   как прокрутку и как выделение текста. `touch-action` только на самих
+   словах: страница за пределами строки прокручивается как обычно. */
+.order-line .tok, .order-bank .tok {
+  touch-action: none; user-select: none; -webkit-user-select: none;
+}
+.order-line .tok { cursor: grab; }
+.order-line .tok:disabled { cursor: default; }
+/* место, откуда слово подняли: видно, куда оно встанет, если отпустить */
+.tok.is-dragging { opacity: 0.3; border-style: dashed; border-color: var(--accent); background: transparent; }
+/* само слово под пальцем — вне потока, поэтому строка не дёргается */
+.tok.drag-ghost {
+  position: fixed; z-index: 60; pointer-events: none; margin: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-color: var(--accent); background: var(--accent-soft); color: var(--accent-ink);
+  box-shadow: var(--shadow); transform: scale(1.06); transition: none;
+}
+
 .gap-wrap { display: flex; justify-content: center; margin-top: 6px; }
 .gap-wrap .input { width: min(320px, 86%); }
 .mgap-sent {

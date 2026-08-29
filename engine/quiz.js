@@ -26,7 +26,7 @@ const TYPE = {
   gap:    { tag: 'впиши слово',       how: '' },
   form:   { tag: 'форма слова',       how: 'поставь слово из скобок в нужную форму' },
   error:  { tag: 'найди ошибку',      how: 'нажми на слово, которое написано неверно' },
-  order:  { tag: 'собери предложение', how: 'нажимай слова по порядку' },
+  order:  { tag: 'собери предложение', how: 'нажимай слова по порядку · перетаскивай, чтобы переставить' },
   mgap:   { tag: 'впиши слова',       how: '' },
   pick:   { tag: 'отметь все верные', how: 'верных вариантов может быть несколько' },
 };
@@ -148,7 +148,7 @@ export function renderTest(app, course, test) {
       <div class="fade-seq quiz">
         ${head(q)}
         <div class="q">${q.ru || ''}</div>
-        <div class="order-line" id="line"><span class="ph">нажимай слова по порядку</span></div>
+        <div class="order-line" id="line"><span class="ph">собери предложение из слов ниже</span></div>
         <div class="order-bank" id="bank">${shuffle(q.tokens).map((w, i) =>
           `<button type="button" class="tok bank-tok" data-w="${i}">${w}</button>`).join('')}</div>
         <div class="explain" id="exp"></div>
@@ -184,6 +184,140 @@ export function renderTest(app, course, test) {
     return '';
   }
 
+  /* ---------- собери предложение ----------
+     Слово ставится нажатием, но порядок правится перетаскиванием: без этого
+     единственный способ поменять местами два слова в середине — разобрать
+     полстроки и собрать заново, а в предложении на тринадцать слов это мучение.
+     Жест — на pointer-событиях: HTML5 drag-and-drop на телефоне не работает,
+     а телефон здесь основной экран. Слушатели живут на window, потому что
+     строка перерисовывается прямо во время жеста и элемент, с которого начали,
+     до конца перетаскивания не доживает. */
+  function bindOrder(root) {
+    const line = root.querySelector('#line');
+    const bank = root.querySelector('#bank');
+    const banks = [...bank.querySelectorAll('.bank-tok')];
+    const words = banks.map(b => b.textContent);
+    const placed = [];                       // индексы слов банка, в порядке строки
+    let drag = null;
+
+    const paint = (focus = null) => {
+      line.innerHTML = placed.length
+        ? placed.map((p, i) => `<button type="button" class="tok placed" data-p="${i}" data-w="${p}"
+            title="перетащи на другое место · нажми, чтобы убрать">${words[p]}</button>`).join('')
+        : '<span class="ph">собери предложение из слов ниже</span>';
+      banks.forEach(b => b.classList.toggle('is-used', placed.includes(+b.dataset.w)));
+      if (drag?.moved) line.children[drag.at]?.classList.add('is-dragging');
+      staged = placed.map(p => words[p]).join(' ');
+      setAct('Проверить', placed.length > 0);
+      if (focus != null) line.querySelector(`[data-p="${focus}"]`)?.focus({ preventScroll: true });
+    };
+
+    /* куда слово встанет: первый токен, чей центр правее указателя.
+       Строка переносится, поэтому сначала отсекаем по нижней грани — иначе
+       слово с последней строки считалось бы «правее» всех предыдущих. */
+    const dropAt = (x, y) => {
+      const toks = [...line.querySelectorAll('.tok')].filter(t => !t.classList.contains('is-dragging'));
+      for (let i = 0; i < toks.length; i++) {
+        const r = toks[i].getBoundingClientRect();
+        if (y <= r.bottom && x < r.left + r.width / 2) return i;
+      }
+      return toks.length;
+    };
+
+    const moveGhost = e => {
+      drag.ghost.style.left = `${e.clientX - drag.dx}px`;
+      drag.ghost.style.top = `${e.clientY - drag.dy}px`;
+    };
+
+    const onMove = e => {
+      if (!drag) return;
+      if (!drag.moved) {
+        if (Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) < 6) return;   // дрожь пальца — ещё не жест
+        const r = drag.el.getBoundingClientRect();
+        const g = drag.el.cloneNode(true);
+        g.className = 'tok drag-ghost';
+        g.disabled = false;
+        g.style.width = `${r.width}px`;
+        g.style.height = `${r.height}px`;
+        /* Двойник живёт в <body>, а --accent объявлен на экране теста —
+           без этой строки слово под пальцем красится корневым синим. */
+        g.style.setProperty('--accent', getComputedStyle(line).getPropertyValue('--accent'));
+        document.body.appendChild(g);
+        drag.ghost = g;
+        drag.moved = true;
+        if (drag.at < 0) { drag.at = dropAt(e.clientX, e.clientY); placed.splice(drag.at, 0, drag.w); }
+        paint();
+      }
+      moveGhost(e);
+      const to = dropAt(e.clientX, e.clientY);
+      if (to !== drag.at) {
+        placed.splice(drag.at, 1);
+        placed.splice(to, 0, drag.w);
+        drag.at = to;
+        paint();
+      }
+      e.preventDefault();
+    };
+
+    const onUp = e => {
+      if (!drag) return;
+      const d = drag;
+      drag = null;
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onUp);
+      d.ghost?.remove();
+      if (!d.moved) {                                   // нажатие, а не жест
+        if (d.src === 'bank') placed.push(d.w);
+        else placed.splice(d.at, 1);
+      } else {
+        const r = bank.getBoundingClientRect();          // бросили в запас — слово вернулось
+        const inBank = e.clientX >= r.left && e.clientX <= r.right
+          && e.clientY >= r.top && e.clientY <= r.bottom;
+        if (inBank) placed.splice(d.at, 1);
+      }
+      paint();
+    };
+
+    const onDown = src => e => {
+      if (checked || drag || e.button > 0) return;
+      const el = e.target.closest(src === 'bank' ? '.bank-tok' : '.placed');
+      if (!el || el.disabled || el.classList.contains('is-used')) return;
+      const r = el.getBoundingClientRect();
+      drag = {
+        src, el, w: +el.dataset.w, at: src === 'bank' ? -1 : +el.dataset.p,
+        x0: e.clientX, y0: e.clientY, dx: e.clientX - r.left, dy: e.clientY - r.top, moved: false,
+      };
+      if (e.pointerType === 'mouse') e.preventDefault();   // мышь иначе выделяет текст по дороге
+      window.addEventListener('pointermove', onMove, { passive: false });
+      window.addEventListener('pointerup', onUp);
+      window.addEventListener('pointercancel', onUp);
+    };
+
+    line.addEventListener('pointerdown', onDown('line'));
+    bank.addEventListener('pointerdown', onDown('bank'));
+
+    /* то же самое с клавиатуры: стрелки двигают слово, Backspace убирает */
+    line.addEventListener('keydown', e => {
+      const el = e.target.closest?.('.placed');
+      if (!el || checked) return;
+      const i = +el.dataset.p;
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+        const j = i + (e.key === 'ArrowLeft' ? -1 : 1);
+        if (j < 0 || j >= placed.length) return;
+        e.preventDefault(); e.stopPropagation();
+        [placed[i], placed[j]] = [placed[j], placed[i]];
+        paint(j);
+      } else if (e.key === 'Backspace' || e.key === 'Delete') {
+        e.preventDefault(); e.stopPropagation();
+        placed.splice(i, 1);
+        paint(placed.length ? Math.min(i, placed.length - 1) : null);
+      }
+    });
+
+    paint();
+  }
+
   /* ---------- ввод ---------- */
   function bindQuestion(root, q) {
     if (q.type === 'choose' || q.type === 'error') {
@@ -209,32 +343,7 @@ export function renderTest(app, course, test) {
       });
     }
 
-    if (q.type === 'order') {
-      const line = root.querySelector('#line');
-      const bank = root.querySelector('#bank');
-      const words = [...bank.querySelectorAll('.bank-tok')].map(b => b.textContent);
-      const placed = [];
-      const refresh = () => {
-        line.innerHTML = placed.length
-          ? placed.map((p, i) => `<button type="button" class="tok placed" data-p="${i}">${words[p]}</button>`).join(' ')
-          : '<span class="ph">нажимай слова по порядку</span>';
-        staged = placed.map(p => words[p]).join(' ');
-        setAct('Проверить', placed.length > 0);
-        line.querySelectorAll('.placed').forEach(b => b.addEventListener('click', () => {
-          if (checked) return;
-          const w = placed.splice(+b.dataset.p, 1)[0];
-          bank.querySelector(`[data-w="${w}"]`).classList.remove('is-used');
-          refresh();
-        }));
-      };
-      bank.querySelectorAll('.bank-tok').forEach(b => b.addEventListener('click', () => {
-        if (checked || b.classList.contains('is-used')) return;
-        b.classList.add('is-used');
-        placed.push(+b.dataset.w);
-        refresh();
-      }));
-      refresh();
-    }
+    if (q.type === 'order') bindOrder(root);
 
     if (q.type === 'mgap') {
       const inputs = [...root.querySelectorAll('.mgap-input')];
