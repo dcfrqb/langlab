@@ -27,6 +27,7 @@ let flushing = false;
    перезагрузки новый номер совпал бы со старым и живая запись
    считалась бы отправленной. */
 let seq = readQueue().reduce((max, i) => Math.max(max, i.seq || 0), 0);
+const stamp = change => ({ ...change, at: Date.now(), seq: ++seq });
 const mark = item => (item.seq != null
   ? `s${item.seq}`
   : `f${item.kind}:${item.dedupe || ''}:${item.at}`);
@@ -132,7 +133,7 @@ export const sync = {
       : change.kind === 'day' ? `day:${change.courseId}:${change.day}`
       : null;
     const q = dedupe ? readQueue().filter(i => i.dedupe !== dedupe) : readQueue();
-    q.push({ ...change, dedupe, at: Date.now(), seq: ++seq });
+    q.push(stamp({ ...change, dedupe }));
     writeQueue(q);
     sync.flush();
   },
@@ -154,20 +155,27 @@ export const sync = {
       }
     }
 
-    /* Вычитаем отправленное, а не переписываем очередь целиком.
-       Один ответ пишет сразу две записи — счётчик дня и расписание
-       вопроса, — и вторая ложится в очередь, пока первая ещё летит.
-       Прежний код брал снимок очереди в начале и в конце writeQueue(left)
+    /* Вычитаем из очереди отработанное — отправленное и отвергнутое, —
+       а не переписываем её целиком. Один ответ пишет сразу две записи:
+       счётчик дня и расписание вопроса, и вторая ложится в очередь, пока
+       первая ещё летит. Прежний код брал снимок в начале и в конце
        затирал им всё, что успело добавиться: день доезжал, расписание
        исчезало молча. Так у человека, занимавшегося неделями, коллекция
-       reviews на сервере оставалась пустой. */
-    const sent = new Set(batch.filter(i => !failed.includes(i)).map(mark));
-    writeQueue([...failed, ...readQueue().filter(i => !sent.has(mark(i)))]);
+       reviews на сервере оставалась пустой.
+       Не отправленное по сети остаётся в очереди само собой: мы его
+       оттуда просто не вычитаем. */
+    const settled = new Set(batch.filter(i => !failed.includes(i)).map(mark));
+    writeQueue(readQueue().filter(i => !settled.has(mark(i))));
     flushing = false;
 
     /* Хвост, приехавший за время отправки, теперь не потерян — но и сам
-       не уедет: его enqueue уже вызвал flush и наткнулся на флаг. */
-    if (readQueue().length) sync.flush();
+       не уедет: его enqueue уже вызвал flush и наткнулся на флаг.
+       Гонимся только за НОВЫМ. Если позвать flush на всё, что осталось,
+       то при лежащем сервере получится плотный цикл: упало — очередь
+       не пуста — зовём снова — упало. Не отправленное по сети ждёт
+       следующего повода: ответа, события online или запуска приложения. */
+    const known = new Set(batch.map(mark));
+    if (readQueue().some(i => !known.has(mark(i)))) sync.flush();
   },
 
   /* Какой курс у человека назначен: у него программа по медицине —
@@ -274,20 +282,23 @@ export const sync = {
     const program = store.program(courseId);
     const q = readQueue();
 
-    Object.keys(lessons).forEach(lessonId => q.push({ kind: 'lesson', courseId, lessonId }));
+    /* Через stamp(), как и enqueue: без номера все записи одного вида
+       неразличимы, а по номеру после отправки вычитается ровно
+       отправленное (см. flush). */
+    Object.keys(lessons).forEach(lessonId => q.push(stamp({ kind: 'lesson', courseId, lessonId })));
     Object.entries(scores).forEach(([testId, s]) =>
-      q.push({ kind: 'score', courseId, testId, correct: s.correct, total: s.total }));
+      q.push(stamp({ kind: 'score', courseId, testId, correct: s.correct, total: s.total })));
 
     /* Расписание и ритм, накопленные до входа: человек мог заниматься
        неделю анонимно, и терять эту неделю при входе нельзя. */
     const { reviews, days } = review.pending(courseId);
-    reviews.forEach(({ key, ...rec }) => q.push({ kind: 'review', courseId, key, rec }));
-    days.forEach(({ day, answered }) => q.push({ kind: 'day', courseId, day, answered }));
+    reviews.forEach(({ key, ...rec }) => q.push(stamp({ kind: 'review', courseId, key, rec })));
+    days.forEach(({ day, answered }) => q.push(stamp({ kind: 'day', courseId, day, answered })));
     /* Отправляем только заведомо своё: `from: 'local'` ставит опрос здесь.
        Серверная копия назад не едет, а запись без метки осталась с прошлых
        версий — чьё это, мы уже не знаем, и в аккаунт её не тащим. */
-    if (profile?.from === 'local') q.push({ kind: 'profile', courseId, profile });
-    if (program?.from === 'local') q.push({ kind: 'program', courseId, program });
+    if (profile?.from === 'local') q.push(stamp({ kind: 'profile', courseId, profile }));
+    if (program?.from === 'local') q.push(stamp({ kind: 'program', courseId, program }));
 
     writeQueue(q);
     await sync.flush();

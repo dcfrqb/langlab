@@ -56,6 +56,7 @@ langlab/
   server/              — бэкенд: PocketBase (docker) + схема в pb_migrations/
   tools/               — оффлайн-инструменты: разбор PDF-учебников, проверка контента
                          (`node tools/en-ru/check.mjs`, `node tools/ielts/check.mjs`)
+                         и очереди отправки в базу (`node tools/check-sync.mjs`)
   README.md ROADMAP.md
 ```
 
