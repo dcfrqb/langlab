@@ -79,14 +79,16 @@ export function renderToday(app, course, { ahead = false } = {}) {
   if (plan.fresh) parts.push(`<b>${plan.fresh}</b> ${plural(plan.fresh, 'новый', 'новых', 'новых')}`);
   if (plan.ahead) parts.push(`<b>${plan.ahead}</b> наперёд`);
   /* Очередь после перерыва называем честно: доза остаётся дневной,
-     но делать вид, что просроченных ровно восемь, нельзя. */
-  const backlog = summary.due - plan.due;
+     но делать вид, что просроченных ровно восемь, нельзя.
+     В добавке очередь не поминаем: она набрана из нового намеренно,
+     и «ещё 40 в очереди» читалось бы как упрёк за лишний заход. */
+  const backlog = ahead ? 0 : summary.due - plan.due;
   if (backlog > 0) parts.push(`ещё ${backlog} в очереди`);
 
   renderTest(app, course, {
     id: 'today',
-    title: 'Сегодня',
-    kind: 'СЕГОДНЯ',
+    title: ahead ? 'Ещё' : 'Сегодня',
+    kind: ahead ? 'ДОБАВКА' : 'СЕГОДНЯ',
     lede: parts.join(' · '),
     questions: plan.items,
     pick: plan.items.length,
@@ -105,8 +107,11 @@ export function renderToday(app, course, { ahead = false } = {}) {
       return `<div class="today-mark">день засчитан · <b>${r.active}</b> из ${r.span} дней</div>
         ${rhythmHTML(course.id, { caption: false })}`;
     },
+    /* «Ещё» ведёт на добавку (`/more`), а не обратно на дозу. Через #/today
+       второй заход набирался бы из тех же просроченных повторов — человек
+       дорешал двенадцать и получает продолжение вчерашнего дня. */
     finishActions: `
       <a class="btn btn-secondary" href="#/">К темам</a>
-      <a class="btn btn-primary" href="#/today">Ещё ${icon('chevron-right')}</a>`,
+      <a class="btn btn-primary" href="#/today/more">Ещё ${icon('chevron-right')}</a>`,
   });
 }

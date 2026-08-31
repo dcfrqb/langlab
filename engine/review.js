@@ -136,6 +136,34 @@ const shuffle = a => {
   return r;
 };
 
+/* ------------------------------------------------------------
+   РАЗНООБРАЗИЕ ЗОН
+
+   Сортировка «сначала самое горячее» кажется очевидной и даёт ровно
+   один результат: вся доза — из одной зоны. У человека с горячими
+   предлогами двенадцать вопросов подряд про предлоги, назавтра снова
+   двенадцать про предлоги. Формально это самое полезное, что можно
+   показать; на деле это то самое «опять одно и то же», после которого
+   заниматься перестают.
+
+   Поэтому порядок остаётся прежним (горячее выше), но из каждой зоны
+   в дозу идёт не больше `limit`. Возвращаем две части отдельно:
+   `fit` — то, что уложилось в потолок, `over` — остаток. Повторам
+   остаток не отдаём (подождут до завтра, лишний день их не испортит),
+   новому отдаём: банк большой, но зон в нём конечное число.
+   ------------------------------------------------------------ */
+function spread(list, zonesOfItem, limit, used = new Map()) {
+  const fit = [];
+  const over = [];
+  list.forEach(item => {
+    const zs = zonesOfItem(item);
+    if (zs.some(z => (used.get(z) || 0) >= limit)) { over.push(item); return; }
+    zs.forEach(z => used.set(z, (used.get(z) || 0) + 1));
+    fit.push(item);
+  });
+  return { fit, over, used };
+}
+
 /* Как дозу делят повторы и новое. Правило живёт в одном месте, потому
    что делят её двое — сборка на #/today и карточка на главной, — и
    разойдись они на единицу, карточка обещает одно, а экран даёт другое. */
@@ -212,25 +240,42 @@ export const review = {
 
     due.sort((a, b) => (b.late - a.late) || ((b.rec.m || 0) - (a.rec.m || 0)));
 
-    const split = splitDose(course, size, due.length, fresh.length);
-    const items = due.slice(0, split.due).map(d => d.q);
+    /* Сколько вопросов одной зоны пускаем в дозу. По умолчанию четверть:
+       на дозе в двенадцать это три, то есть минимум четыре разные темы
+       за заход. */
+    const cap = course.zoneCap || Math.max(2, Math.ceil(size / 4));
+    const zonesOfQ = q => zonesOf(course, q);
+
+    /* Добавка («Ещё») — только новое. Повторы своё уже отработали
+       в основной дозе; второй заход, набранный из тех же просроченных,
+       и есть «опять одно и то же». */
+    const split = ahead
+      ? { due: 0, fresh: Math.min(fresh.length, size) }
+      : splitDose(course, size, due.length, fresh.length);
+
+    /* Счётчик зон один на всю дозу, а не свой у повторов и у нового:
+       иначе три повтора про предлоги плюс три новых про предлоги —
+       это те же шесть предлогов подряд. */
+    const used = new Map();
+    const dueSpread = spread(due.map(d => d.q), zonesOfQ, cap, used);
+    const items = dueSpread.fit.slice(0, split.due);
     const counts = { due: items.length, fresh: 0, ahead: 0 };
 
     if (items.length < size) {
       const heat = heatMap(course, state);
       const score = q => zonesOf(course, q).reduce((s, z) => s + (heat.get(z) || 0), 0) + (q.mine ? 0.5 : 0);
-      const ranked = shuffle(fresh).sort((a, b) => score(b) - score(a));
-      const take = ranked.slice(0, size - items.length);
+      const ranked = spread(shuffle(fresh).sort((a, b) => score(b) - score(a)), zonesOfQ, cap, used);
+      const take = [...ranked.fit, ...ranked.over].slice(0, size - items.length);
       counts.fresh = take.length;
       items.push(...take);
     }
 
-    /* «Ещё» — когда на сегодня всё закрыто, а заниматься хочется:
-       подтягиваем ближайшие будущие повторы. Раньше срока, зато
-       по своей воле — это лучше, чем закрыть приложение. */
+    /* Если и нового не хватило — тянем ближайшие будущие повторы.
+       Раньше срока, зато по своей воле: это лучше, чем закрыть вкладку. */
     if (ahead && items.length < size) {
       later.sort((a, b) => (a.rec.d < b.rec.d ? -1 : 1));
-      const take = later.slice(0, size - items.length).map(l => l.q);
+      const ahead2 = spread(later.map(l => l.q), zonesOfQ, cap, used);
+      const take = [...ahead2.fit, ...ahead2.over].slice(0, size - items.length);
       counts.ahead = take.length;
       items.push(...take);
     }
