@@ -568,6 +568,15 @@
    спрашивают каждый день, «что тут вообще есть» — один раз. */
 .today-block { margin-top: var(--s-5); }
 
+/* Где живут занятия, пока не вошёл. Тон служебный: это сноска, а не
+   призыв — уговаривать войти каждый заход хуже, чем не сказать вовсе. */
+.today-where {
+  margin-top: var(--s-3);
+  font-family: var(--font-mono); font-size: var(--fs-2); color: var(--text-faint);
+}
+.today-where a { color: var(--text-dim); text-decoration: underline; text-underline-offset: 3px; }
+@media (hover: hover) { .today-where a:hover { color: var(--text); } }
+
 /* Доза дня красится ролью «сейчас». Заливка амбера яркая в обеих темах,
    поэтому надпись на ней тёмная — белая на жёлтом не читается. */
 .today-cta { --on-accent: var(--on-now); }

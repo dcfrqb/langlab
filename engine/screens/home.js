@@ -8,7 +8,17 @@ import { store } from '../storage.js';
 import { review } from '../review.js';
 import { rhythmHTML } from '../rhythm.js';
 import { setKeys } from '../keys.js';
+import { api } from '../api.js';
 import { icon } from '../../ui/icons.js';
+
+/* Где живут занятия. Строчка мелкая и без нытья, но она есть: без входа
+   всё копится в одном браузере, и узнать об этом раньше было неоткуда —
+   сайт-то работает целиком. Выкинутому из аккаунта это не показываем,
+   ему уже говорит полоса в шапке. */
+const whereHTML = () => (api.isAuthed || api.sessionExpired
+  ? ''
+  : `<p class="today-where">сохраняется только в этом браузере ·
+       <a href="#/login">войти</a></p>`);
 
 /* Блок «сегодня» стоит первым и до программы: программа отвечает на
    вопрос «куда я иду», а он — на вопрос «что делать прямо сейчас».
@@ -48,6 +58,7 @@ function todayHTML(course) {
     <div class="today-block">
       <a class="cta today-cta" href="#/today" style="--accent:var(--now)">${body}</a>
       ${rhythmHTML(course.id)}
+      ${whereHTML()}
     </div>`;
 }
 

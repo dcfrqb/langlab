@@ -5,11 +5,20 @@
 
 const BASE = '/api';
 const AUTH_KEY = 'langlab.auth';       // { token, user: {id, email} }
+/* Отдельная метка «сессия была и кончилась». Без неё выпадение из
+   аккаунта неотличимо от «никогда не входил»: и там и там просто нет
+   токена, сайт работает целиком, и человек полгода занимается мимо
+   базы, ничего не подозревая. Ровно это и случилось. */
+const GONE_KEY = 'langlab.auth.gone';
 
 let auth = read();
 
 function read() {
   try { return JSON.parse(localStorage.getItem(AUTH_KEY)) || null; } catch { return null; }
+}
+
+function flag(key, on) {
+  try { on ? localStorage.setItem(key, '1') : localStorage.removeItem(key); } catch { /* приватный режим */ }
 }
 
 function write(value) {
@@ -18,6 +27,7 @@ function write(value) {
     if (value) localStorage.setItem(AUTH_KEY, JSON.stringify(value));
     else localStorage.removeItem(AUTH_KEY);
   } catch { /* приватный режим */ }
+  if (value) flag(GONE_KEY, false);     // вошёл — метке больше нечего сообщать
 }
 
 async function request(path, { method = 'GET', body, auth: needAuth = true } = {}) {
@@ -35,7 +45,10 @@ async function request(path, { method = 'GET', body, auth: needAuth = true } = {
 
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    if (res.status === 401 && needAuth) write(null);   // токен протух — выкидываем
+    if (res.status === 401 && needAuth) {               // токен протух — выкидываем,
+      if (auth) flag(GONE_KEY, true);                   // но не молча
+      write(null);
+    }
     const err = new Error(data.message || `HTTP ${res.status}`);
     err.status = res.status;
     err.data = data.data || {};
@@ -47,6 +60,11 @@ async function request(path, { method = 'GET', body, auth: needAuth = true } = {
 export const api = {
   get user() { return auth?.user || null; },
   get isAuthed() { return !!auth?.token; },
+  /* «тебя выкинуло», а не «ты не входил» — экранам это разные новости */
+  get sessionExpired() {
+    if (auth) return false;
+    try { return localStorage.getItem(GONE_KEY) === '1'; } catch { return false; }
+  },
 
   /* --- вход: почта → код из письма --- */
   async requestCode(email) {
@@ -86,7 +104,9 @@ export const api = {
     }
   },
 
-  logout() { write(null); },
+  /* Вышел сам — это не «выкинуло»: метку снимаем, иначе сайт будет
+     звать обратно того, кто только что ушёл нарочно. */
+  logout() { write(null); flag(GONE_KEY, false); },
 
   /* --- записи --- */
   async list(collection, { filter, sort, perPage = 200, page = 1 } = {}) {

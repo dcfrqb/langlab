@@ -119,6 +119,16 @@ footer.site {
 /* ============================================================
    Шапка
    ============================================================ */
+/* Полоса «вход истёк». Стоит НАД шапкой и не липкая: сказать надо
+   один раз и внятно, а не возить предупреждение за собой по экрану. */
+.nav-stale {
+  background: var(--warn-soft); color: var(--warn-ink);
+  border-bottom: 1px solid var(--warn);
+  font-family: var(--font-mono); font-size: var(--fs-2);
+  padding: 10px var(--s-4); text-align: center;
+}
+.nav-stale a { text-decoration: underline; text-underline-offset: 3px; font-weight: 700; }
+
 .nav {
   position: sticky; top: 0; z-index: 50;
   backdrop-filter: blur(14px) saturate(140%);

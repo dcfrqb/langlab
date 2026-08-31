@@ -27,8 +27,18 @@ function accountHTML(active) {
     title="${api.user.email} — выйти" aria-label="Выйти из аккаунта ${api.user.email}">${name}${icon('logout')}</button>`;
 }
 
+/* Полоса «тебя выкинуло». Висит на всех экранах, пока не войдёшь заново.
+   Раньше выпадение из аккаунта было бесшумным: сайт работает целиком,
+   доза собирается, ритм считается — и всё это мимо базы. Узнать об этом
+   можно было только заглянув в саму базу. */
+const staleHTML = () => (api.sessionExpired
+  ? `<div class="nav-stale">Вход истёк — сейчас всё сохраняется только в этом браузере.
+       <a href="#/login">Войти снова</a></div>`
+  : '');
+
 export function navHTML(course, active) {
   return `
+    ${staleHTML()}
     <nav class="nav"><div class="nav-inner">
       <a class="brand" href="#/"><span class="dot"></span> ${course.brand.name}<span class="dim">${course.brand.suffix}</span></a>
       <div class="nav-links">
