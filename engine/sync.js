@@ -31,6 +31,23 @@ const mark = item => (item.seq != null
   ? `s${item.seq}`
   : `f${item.kind}:${item.dedupe || ''}:${item.at}`);
 
+/* Отказ сервера, который повтором не лечится. Такую запись действительно
+   надо выкинуть — иначе она навсегда застрянет в очереди и будет каждый
+   раз получать те же 400. Но выкидывать её МОЛЧА нельзя: именно так
+   полгода терялось расписание повторений — сервер отвечал «Cannot be
+   blank» на нулевую ступень (то есть на каждый промах), очередь честно
+   считала это неисправимым, и наружу не выходило ничего: ни ошибки
+   в консоли, ни следа. Теперь след остаётся. */
+const REJECTED_KEY = 'langlab.sync.rejected';
+function reject(item, err) {
+  console.warn('[sync] сервер отверг запись и она потеряна:', item.kind, err.status, err.data || err.message, item);
+  try {
+    const log = JSON.parse(localStorage.getItem(REJECTED_KEY) || '[]');
+    log.push({ kind: item.kind, at: Date.now(), status: err.status, why: err.data || err.message });
+    localStorage.setItem(REJECTED_KEY, JSON.stringify(log.slice(-20)));
+  } catch { /* приватный режим — хватит и консоли */ }
+}
+
 async function sendOne(item) {
   const user = api.user.id;
 
@@ -132,7 +149,8 @@ export const sync = {
         await sendOne(item);
       } catch (e) {
         // 4xx — данные кривые, повтор не поможет; всё остальное пробуем позже
-        if (!(e.status >= 400 && e.status < 500)) failed.push(item);
+        if (e.status >= 400 && e.status < 500) reject(item, e);
+        else failed.push(item);
       }
     }
 
