@@ -18,19 +18,19 @@ function todayHTML(course) {
 
   const size = course.dose || 8;
   const s = review.summary(course, size);
-  const waiting = Math.min(size, s.due + s.fresh);
+  const waiting = s.take.due + s.take.fresh;
 
   const body = waiting
     ? `<div>
          <div class="cta-k">доза дня</div>
          <div class="cta-t">${waiting} ${waiting === 1 ? 'вопрос' : waiting < 5 ? 'вопроса' : 'вопросов'} на сегодня</div>
          <div class="today-mix">${[
-           s.due ? `${Math.min(s.due, size)} ждёт повторения` : '',
-           s.fresh && s.due < size ? `${Math.min(s.fresh, size - s.due)} ещё не видел` : '',
+           s.take.due ? `${s.take.due} ждёт повторения` : '',
+           s.take.fresh ? `${s.take.fresh} ещё не видел` : '',
            /* Хвост называем вслух. После перерыва просроченных бывает две
-              сотни, а доза остаётся дневной: молча показывать «8 вопросов»
+              сотни, а доза остаётся дневной: молча показывать «12 вопросов»
               и не сказать про очередь — врать про масштаб. */
-           s.due > size ? `<b>+${s.due - size}</b> в очереди` : '',
+           s.due > s.take.due ? `<b>+${s.due - s.take.due}</b> в очереди` : '',
          ].filter(Boolean).join(' · ')}</div>
        </div>
        <span class="cta-go">${s.answeredToday ? 'ещё' : 'начать'} ${icon('chevron-right')}</span>`

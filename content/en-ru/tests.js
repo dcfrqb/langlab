@@ -6,6 +6,7 @@
      questions-b1.js    пачка 3   · B1/B2 · конструкции и лексика
      questions-fix.js   пачка 4   · РЕМОНТ — под журнал ошибок Will'а
      questions-ielts.js пачка 4   · МОСТ К IELTS — письмо и академическая лексика
+     questions-daily.js пачка 5   · МЕСЯЦ — топливо для дозы дня, те же зоны вширь
      questions-diag.js  ЗАМЕР     · 24 вопроса фиксированного состава
 
    Типы вопросов:
@@ -22,6 +23,7 @@
 import { B1_QUESTIONS } from './questions-b1.js';
 import { FIX_QUESTIONS } from './questions-fix.js';
 import { IELTS_QUESTIONS } from './questions-ielts.js';
+import { DAILY_QUESTIONS } from './questions-daily.js';
 import { DIAG_QUESTIONS } from './questions-diag.js';
 
 const BASE_QUESTIONS = [
@@ -304,6 +306,7 @@ export const QUESTIONS = [
   ...B1_QUESTIONS,
   ...FIX_QUESTIONS,
   ...IELTS_QUESTIONS,
+  ...DAILY_QUESTIONS,
   ...DIAG_QUESTIONS,
 ];
 
@@ -388,13 +391,15 @@ export const TESTS = [
 
   /* ---- МИКСЫ И ФИНАЛ ---- */
   { id:'base',    title:'База · контроль',        sub:'12 вопросов уровня A1/A2 — проверка, что фундамент не поехал',
-    sect:'Миксы и финал', lvl:'A1–A2', aspect:'simple',  filter:q=>live(q)&&!q.r3&&!q.r4, pick:12, mixed:true },
+    sect:'Миксы и финал', lvl:'A1–A2', aspect:'simple',  filter:q=>live(q)&&!q.r3&&!q.r4&&!q.r5, pick:12, mixed:true },
+  { id:'mix5',    title:'Микс · пачка 5',         sub:'весь материал последнего пополнения: ремонт вширь + конструкции + лексика',
+    sect:'Миксы и финал', lvl:'B1–B2', aspect:'perfcont', filter:pack(5),   pick:20, mixed:true },
   { id:'mix4',    title:'Микс · пачка 4',         sub:'весь новый материал вперемешку: ремонт + мост к IELTS',
     sect:'Миксы и финал', lvl:'B1–B2', aspect:'continuous', filter:pack(4),   pick:20, mixed:true },
   { id:'lexmix',  title:'Лексика · большой микс', sub:'вся лексика сразу: слова, пары, регистр, графики',
     sect:'Миксы и финал', lvl:'B1–B2', aspect:'perfcont',   filter:q=>live(q)&&q.lex, pick:20, mixed:true },
   { id:'mixb1',   title:'Микс B1+ · без разминки',sub:'только материал уровня B1/B2, ни одного простого вопроса',
-    sect:'Миксы и финал', lvl:'B1–B2', aspect:'perfect',    filter:q=>live(q)&&(q.r3||q.r4), pick:20, mixed:true },
+    sect:'Миксы и финал', lvl:'B1–B2', aspect:'perfect',    filter:q=>live(q)&&(q.r3||q.r4||q.r5), pick:20, mixed:true },
   { id:'final',   title:'Финал · экзамен',        sub:'35 вопросов, грамматика и лексика, всё сложное сразу',
-    sect:'Миксы и финал', lvl:'B2',    aspect:'perfcont',   filter:q=>live(q)&&(q.r2||q.r3||q.r4), pick:35, mixed:true },
+    sect:'Миксы и финал', lvl:'B2',    aspect:'perfcont',   filter:q=>live(q)&&(q.r2||q.r3||q.r4||q.r5), pick:35, mixed:true },
 ];

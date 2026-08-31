@@ -136,6 +136,18 @@ const shuffle = a => {
   return r;
 };
 
+/* Как дозу делят повторы и новое. Правило живёт в одном месте, потому
+   что делят её двое — сборка на #/today и карточка на главной, — и
+   разойдись они на единицу, карточка обещает одно, а экран даёт другое. */
+function splitDose(course, size, dueCount, freshCount) {
+  const share = course.freshShare ?? 0.35;
+  /* Новых нет — повторы занимают всё: выдумывать пустые места,
+     когда банк кончился, незачем. */
+  const room = freshCount ? Math.max(1, size - Math.max(1, Math.round(size * share))) : size;
+  const due = Math.min(dueCount, size, room);
+  return { due, fresh: Math.min(freshCount, size - due) };
+}
+
 export const review = {
   /* --- запись одного ответа --- */
   record(course, q, correct) {
@@ -149,7 +161,14 @@ export const review = {
 
     const key = qid(q);
     const prev = store.reviews(course.id)[key] || { b: 0, n: 0, m: 0 };
-    const box = correct ? Math.min((prev.b || 0) + 1, STEPS.length) : Math.max(0, (prev.b || 0) - 2);
+    /* Первое попадание с ходу — не на завтра. Иначе один тест на
+       двадцать вопросов кладёт двадцать штук в завтрашнюю дозу, и
+       неделю подряд человек видит ровно то, что уже сдал без запинки.
+       Ступень «3 дня» здесь честнее: угадать двадцать раз подряд
+       нельзя, а помнить сутки — можно и не зная. */
+    const box = correct
+      ? Math.min((prev.n ? (prev.b || 0) + 1 : 2), STEPS.length)
+      : Math.max(0, (prev.b || 0) - 2);
 
     store.saveReview(course.id, key, {
       b: box,
@@ -162,8 +181,16 @@ export const review = {
 
   /* --- из чего состоит сегодняшняя доза ---
      Сначала просроченные повторы (в порядке «кто дольше ждёт»),
-     потом новые из горячих зон. Повтор всегда главнее нового:
-     дырявое ведро не чинят, доливая воду. */
+     потом новые из горячих зон. Повтор главнее нового: дырявое
+     ведро не чинят, доливая воду.
+
+     Но не главнее целиком. Пройденный подряд десяток тестов кладёт
+     в очередь сотню повторов, и дальше доза месяцами состоит из
+     одних и тех же предложений — человек приходит и видит вчерашний
+     день. Поэтому у повторов есть потолок: доля дозы (freshShare)
+     всегда отдана новому, пока новое в банке есть. Просроченное
+     от этого не теряется — оно стареет и лезет наверх сортировкой
+     «кто дольше ждёт», просто разбирается за несколько заходов. */
   plan(course, size = course.dose || 8, { ahead = false } = {}) {
     /* Возвращаем не голый список, а состав: экрану надо сказать вслух,
        из чего сегодняшняя доза собрана — «4 повтора и 3 новых» читается
@@ -184,7 +211,9 @@ export const review = {
     });
 
     due.sort((a, b) => (b.late - a.late) || ((b.rec.m || 0) - (a.rec.m || 0)));
-    const items = due.slice(0, size).map(d => d.q);
+
+    const split = splitDose(course, size, due.length, fresh.length);
+    const items = due.slice(0, split.due).map(d => d.q);
     const counts = { due: items.length, fresh: 0, ahead: 0 };
 
     if (items.length < size) {
@@ -228,9 +257,13 @@ export const review = {
     });
 
     const days = store.days(course.id);
+    const split = splitDose(course, size, due, fresh);
     return {
       due,
       fresh,
+      /* сколько чего реально войдёт в сегодняшнюю дозу — карточка на
+         главной обещает ровно то, что потом покажет #/today */
+      take: split,
       scheduled,
       nextDue,
       nextInDays: nextDue ? daysBetween(today, nextDue) : null,

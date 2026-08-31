@@ -220,6 +220,7 @@ console.log(`тем: ${course.lessons.length} · шагов: ${course.lessons.re
   + ` · групп: ${course.groups.length}`);
 console.log(`вопросов: ${questions.length} (замер ${questions.filter(q => q.diag).length}`
   + ` · пачка 4 ${questions.filter(q => q.r4 && !q.diag).length}`
+  + ` · пачка 5 ${questions.filter(q => q.r5 && !q.diag).length}`
   + ` · «твои ошибки» ${questions.filter(q => q.mine).length}) · тестов: ${course.tests.length}`);
 console.log(`зоны: ${coverage.join(' · ')}`);
 
