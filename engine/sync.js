@@ -20,6 +20,17 @@ const writeQueue = q => {
 
 let flushing = false;
 
+/* Личный номер записи в очереди. Нужен, чтобы после отправки вычесть
+   ровно отправленное: по времени (`at`) две записи одного ответа
+   неразличимы — они ложатся в одну миллисекунду. Отсчёт продолжаем
+   с того, что осталось в очереди с прошлого запуска, иначе после
+   перезагрузки новый номер совпал бы со старым и живая запись
+   считалась бы отправленной. */
+let seq = readQueue().reduce((max, i) => Math.max(max, i.seq || 0), 0);
+const mark = item => (item.seq != null
+  ? `s${item.seq}`
+  : `f${item.kind}:${item.dedupe || ''}:${item.at}`);
+
 async function sendOne(item) {
   const user = api.user.id;
 
@@ -104,28 +115,41 @@ export const sync = {
       : change.kind === 'day' ? `day:${change.courseId}:${change.day}`
       : null;
     const q = dedupe ? readQueue().filter(i => i.dedupe !== dedupe) : readQueue();
-    q.push({ ...change, dedupe, at: Date.now() });
+    q.push({ ...change, dedupe, at: Date.now(), seq: ++seq });
     writeQueue(q);
     sync.flush();
   },
 
   async flush() {
     if (flushing || !api.isAuthed || !navigator.onLine) return;
-    const queue = readQueue();
-    if (!queue.length) return;
+    const batch = readQueue();
+    if (!batch.length) return;
 
     flushing = true;
-    const left = [];
-    for (const item of queue) {
+    const failed = [];
+    for (const item of batch) {
       try {
         await sendOne(item);
       } catch (e) {
         // 4xx — данные кривые, повтор не поможет; всё остальное пробуем позже
-        if (!(e.status >= 400 && e.status < 500)) left.push(item);
+        if (!(e.status >= 400 && e.status < 500)) failed.push(item);
       }
     }
-    writeQueue(left);
+
+    /* Вычитаем отправленное, а не переписываем очередь целиком.
+       Один ответ пишет сразу две записи — счётчик дня и расписание
+       вопроса, — и вторая ложится в очередь, пока первая ещё летит.
+       Прежний код брал снимок очереди в начале и в конце writeQueue(left)
+       затирал им всё, что успело добавиться: день доезжал, расписание
+       исчезало молча. Так у человека, занимавшегося неделями, коллекция
+       reviews на сервере оставалась пустой. */
+    const sent = new Set(batch.filter(i => !failed.includes(i)).map(mark));
+    writeQueue([...failed, ...readQueue().filter(i => !sent.has(mark(i)))]);
     flushing = false;
+
+    /* Хвост, приехавший за время отправки, теперь не потерян — но и сам
+       не уедет: его enqueue уже вызвал flush и наткнулся на флаг. */
+    if (readQueue().length) sync.flush();
   },
 
   /* Какой курс у человека назначен: у него программа по медицине —
